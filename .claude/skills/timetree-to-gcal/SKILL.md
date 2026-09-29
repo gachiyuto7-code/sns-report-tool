@@ -21,7 +21,7 @@ TimeTree の予定を Google カレンダーへ一方向で同期する。何度
 ## 前提
 
 - ネットワークで `timetreeapp.com` に接続できること。クラウド環境でブロックされる場合は、環境設定の Network access で `timetreeapp.com` を許可ドメインに追加してもらう。
-- TimeTree のログイン情報が環境変数 `TIMETREE_EMAIL` / `TIMETREE_PASSWORD` に設定されていること（非公開カレンダーのため）。パスワードをチャットに書かせたり、ファイルやコミットに残したりしない。未設定なら環境の Secrets / 環境変数に登録するよう案内して止まる。
+- （後述のブラウザ経由で取得する場合は次の項目は不要）TimeTree のログイン情報が環境変数 `TIMETREE_EMAIL` / `TIMETREE_PASSWORD` に設定されていること（非公開カレンダーのため）。パスワードをチャットに書かせたり、ファイルやコミットに残したりしない。未設定なら環境の Secrets / 環境変数に登録するよう案内して止まる。
 - Google Calendar コネクタ（`mcp__Google_Calendar__*`）が使えること。ツールが未ロードなら ToolSearch で `select:mcp__Google_Calendar__list_events,mcp__Google_Calendar__create_event,mcp__Google_Calendar__update_event,mcp__Google_Calendar__delete_event` を読み込む。
 
 ## 手順
@@ -38,6 +38,13 @@ timetree-exporter -c pwKoWTfpBTjX -o "$W/timetree.ics"
 - メール・パスワードは環境変数から自動で読まれる。
 - 「No calendars found with the specified codes」と出て一覧選択の入力待ちになった場合は、そのアカウントにこのカレンダーが無い。一覧をユーザーに見せてどれを使うか確認する。
 - 公開カレンダー（`timetreeapp.com/public_calendars/...`）の場合はログイン不要: `timetree-exporter --public-calendar -c <公開ID> -o "$W/timetree.ics"`
+
+**ブラウザ経由（Claude in Chrome）**: ブラウザ操作ツール（`mcp__claude-in-chrome__*` など。ローカルの Claude Code を `claude --chrome` で起動すると使える）があり、ユーザーがその Chrome で TimeTree にログイン済みなら、ログイン情報の環境変数は不要。
+1. `https://timetreeapp.com/calendars/pwKoWTfpBTjX` を開き、同期期間に含まれる月を順に表示する。
+2. 各予定をクリックして詳細（タイトル・日付・開始/終了時刻・終日か・場所・メモ）を読み取る。
+3. 手順 2 の出力と同じ形式の JSON を `$W/timetree.json` に書く（`window` は期間、`events[]` は `key` / `summary` / `start` / `end` / `all_day` / `location` / `description` / `hash`）。`key` は `web_<開始日>_<タイトル>`、`hash` は `summary`・`start`・`end`・`location`・`description` を連結した文字列の SHA-1 先頭 12 桁にする。
+4. 手順 2 を飛ばして手順 3 へ進む。
+この方法では予定の時刻やタイトルが変わると「削除＋新規作成」扱いになる。
 
 **フォールバック**: TimeTree に接続できない・ログインできない場合は、ユーザーに次のいずれかを頼む。
 - 手元の PC で上記コマンドを実行して得た `timetree.ics` をアップロードしてもらう（以降の手順はそのまま使える）
