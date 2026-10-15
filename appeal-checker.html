@@ -89,6 +89,16 @@ ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
   <h1>訴求チェッカー<span class="badge" id="modeBadge">通信なし・ブラウザ内で完結</span></h1>
   <p class="lead">訴求軸を先に決めて、画像・動画・キャプションがその訴求に合っているかを確認します。ジャンルを問わず使えます。初期状態では外部へデータを送信しません。</p>
 
+  <section class="card">
+    <h2>お試しサンプル</h2>
+    <p class="hint">架空のコーヒー豆サブスクを題材に、訴求にきれいに合っている例と、大きくずれている例を自動入力します（画像もこの場で生成）。入力済みの内容は上書きされます。</p>
+    <div class="actions" style="margin-top:0">
+      <button id="sampleHigh">高得点を狙う例を入れる</button>
+      <button class="ghost" id="sampleLow">低得点になる例を入れる</button>
+    </div>
+    <div class="note" id="sampleNote"></div>
+  </section>
+
   <!-- STEP 1 -->
   <section class="card">
     <h2><span class="step">1</span>訴求軸を入力</h2>
@@ -722,6 +732,86 @@ ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
         "\n（会社のネットワークでGoogleのAPIがブロックされている場合は、コピペ方式を使ってください）";
     }).then(function () { clearTimeout(timer); updateMode(); });
   }
+
+  /* ------------------------------------------------------------------ samples */
+  var FONT = '"Hiragino Sans","Yu Gothic","Meiryo","Noto Sans CJK JP","WenQuanYi Zen Hei",sans-serif';
+  function sampleCanvas(draw) {
+    var c = document.createElement("canvas"); c.width = 1080; c.height = 1350;
+    var g = c.getContext("2d"); g.textBaseline = "middle"; draw(g, c.width, c.height);
+    return c;
+  }
+  function ell(g, x, y, rx, ry, fill, rot) { g.beginPath(); g.ellipse(x, y, rx, ry, rot || 0, 0, Math.PI * 2); g.fillStyle = fill; g.fill(); }
+  function drawHigh(g, w, h) {
+    var bg = g.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, "#fbf1de"); bg.addColorStop(1, "#e9d2b0");
+    g.fillStyle = bg; g.fillRect(0, 0, w, h);
+    ell(g, 860, 230, 190, 190, "rgba(255,236,190,.75)");
+    g.fillStyle = "#4a2f1d"; g.textAlign = "left";
+    g.font = "bold 76px " + FONT; g.fillText("朝の5分を、", 90, 200);
+    g.font = "bold 76px " + FONT; g.fillText("挽きたての香りで。", 90, 300);
+    g.font = "32px " + FONT; g.fillStyle = "#7a5a40"; g.fillText("いつもの朝が、少しやさしくなる一杯を。", 90, 385);
+    ell(g, 540, 940, 330, 70, "rgba(90,60,40,.18)");
+    g.fillStyle = "#fffaf2"; g.beginPath(); g.moveTo(300, 640); g.lineTo(780, 640); g.quadraticCurveTo(770, 930, 540, 950); g.quadraticCurveTo(310, 930, 300, 640); g.fill();
+    ell(g, 540, 640, 240, 52, "#5b3a24"); ell(g, 540, 640, 205, 36, "#7b5236");
+    g.beginPath(); g.ellipse(790, 750, 80, 100, 0, -Math.PI / 2, Math.PI / 2); g.lineWidth = 34; g.strokeStyle = "#fffaf2"; g.stroke();
+    g.lineWidth = 10; g.strokeStyle = "rgba(120,90,60,.35)"; g.lineCap = "round";
+    [440, 540, 640].forEach(function (x) { g.beginPath(); g.moveTo(x, 590); g.bezierCurveTo(x - 40, 530, x + 40, 490, x, 420); g.stroke(); });
+    [[210, 1040, 28], [300, 1085, 24], [820, 1050, 26], [900, 1100, 22], [150, 1110, 22]].forEach(function (b, i) { ell(g, b[0], b[1], b[2], b[2] * 1.4, "#5b3a24", i * .6); g.fillStyle = "#3b2314"; g.fillRect(b[0] - 2, b[1] - b[2], 4, b[2] * 1.5); });
+    g.fillStyle = "#4a2f1d"; g.fillRect(90, 1170, 900, 110);
+    g.fillStyle = "#fbf1de"; g.font = "bold 44px " + FONT; g.fillText("初回お試しセット　500円", 130, 1225);
+    g.font = "28px " + FONT; g.textAlign = "right"; g.fillText("MORI COFFEE", 950, 1225);
+  }
+  function drawLow(g, w, h) {
+    g.fillStyle = "#ffe600"; g.fillRect(0, 0, w, h);
+    g.fillStyle = "#e60012"; for (var i = 0; i < 9; i++) { g.fillRect(0, i * 170 + 40, w, 70); }
+    g.textAlign = "center"; g.lineJoin = "round";
+    function t(s, y, size, fill, stroke) {
+      g.font = "900 " + size + "px " + FONT;
+      if (stroke) { g.lineWidth = 16; g.strokeStyle = stroke; g.strokeText(s, w / 2, y); }
+      g.fillStyle = fill; g.fillText(s, w / 2, y);
+    }
+    t("全品半額!!!", 270, 170, "#ffffff", "#000000");
+    t("在庫一掃セール", 520, 120, "#e60012", "#ffffff");
+    t("コーヒ豆　激安", 740, 130, "#000000", "#ffffff");
+    t("今すぐ買わないと損", 940, 74, "#ffffff", "#000000");
+    t("※先着順　なくなり次第終了", 1090, 44, "#000000");
+    g.fillStyle = "#000"; g.fillRect(40, 1180, 1000, 110);
+    g.fillStyle = "#ffe600"; g.font = "bold 52px " + FONT; g.fillText("今すぐ！　急げ！！　最安値！！！", w / 2, 1235);
+  }
+  var SAMPLES = {
+    high: {
+      note: "高得点を狙う例：訴求（朝の香り・挽きたて・初回お試し）が、画像・文章・CTA・トーンのすべてでそろっています。",
+      appeal: "忙しい朝でも、挽きたての香りで1日がやさしく始まる",
+      target: "20〜30代の働く人（朝が慌ただしい）",
+      cta: "プロフィールのリンクから初回お試しセットを注文",
+      tone: "落ち着いて、やさしく、押しつけない",
+      kw: "朝, 挽きたて, 香り, 初回お試し",
+      must: "初回お試しセット, 500円, プロフィールのリンク",
+      caption: "朝の5分を、少しだけ丁寧に。\n\n挽きたての香りが立ちのぼる瞬間は、慌ただしい朝のささやかなごほうびです。\nMORI COFFEEは、焙煎したてのコーヒー豆を毎月お届けします。\n\nはじめての方には、初回お試しセット（500円）をご用意しました。\n気になった方は、プロフィールのリンクからのぞいてみてください。\n\n#朝コーヒー #挽きたて #コーヒーのある暮らし #MORICOFFEE",
+      draw: drawHigh, file: "sample-high.png"
+    },
+    low: {
+      note: "低得点になる例：同じ訴求軸なのに、画像と文章が「激安セール」一色で、トーンも誤字も訴求から大きくずれています。",
+      appeal: "忙しい朝でも、挽きたての香りで1日がやさしく始まる",
+      target: "20〜30代の働く人（朝が慌ただしい）",
+      cta: "プロフィールのリンクから初回お試しセットを注文",
+      tone: "落ち着いて、やさしく、押しつけない",
+      kw: "朝, 挽きたて, 香り, 初回お試し",
+      must: "初回お試しセット, 500円, プロフィールのリンク",
+      caption: "【緊急】全品半額！！！！絶対に最安値！！\n今買わないと100%後悔します！！ ！\n引きたてのコーヒ豆が、なんと奇跡の価格に！！\n在庫が無くなったら終わりなので、急いで下さい！！！\n\n#セール #激安 #半額 #最安値 #お得 #買って #今すぐ #限定 #コーヒー",
+      draw: drawLow, file: "sample-low.png"
+    }
+  };
+  function loadSample(key) {
+    var s = SAMPLES[key];
+    ["appeal", "target", "cta", "tone", "kw", "must", "caption"].forEach(function (id) { $(id).value = s[id]; });
+    $("platform").value = "instagram"; $("imgtext").value = ""; $("imgdesc").value = "";
+    creatives.forEach(function (c) { URL.revokeObjectURL(c.url); }); creatives = []; renderFiles();
+    sampleCanvas(s.draw).toBlob(function (b) { addFiles([new File([b], s.file, { type: "image/png" })]); }, "image/png");
+    $("sampleNote").textContent = s.note + " 下のステップ2までスクロールして内容を確認し、「ルールチェックを実行」や「Gemini用の指示文を作る」を押してください。";
+    $("capNote").scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+  $("sampleHigh").addEventListener("click", function () { loadSample("high"); });
+  $("sampleLow").addEventListener("click", function () { loadSample("low"); });
 
   $("runLocal").addEventListener("click", runLocal);
   $("makePrompt").addEventListener("click", buildPrompt);
