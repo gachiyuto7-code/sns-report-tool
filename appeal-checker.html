@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>訴求チェッカー</title>
+<style>
+:root {
+  --bg: #f5f6f8; --card: #ffffff; --text: #1d2330; --sub: #5d6676; --line: #dfe3ea;
+  --accent: #3b5bdb; --accent-soft: #e7ecff; --ok: #2b8a3e; --warn: #e67700; --ng: #c92a2a;
+  --ok-soft: #e6f4ea; --warn-soft: #fff3e0; --ng-soft: #fdeaea;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14171d; --card: #1d222b; --text: #e8ebf1; --sub: #98a1b2; --line: #2e3542;
+    --accent: #7b93ff; --accent-soft: #263055; --ok: #69db7c; --warn: #ffa94d; --ng: #ff8787;
+    --ok-soft: #1f3a27; --warn-soft: #3d2f1a; --ng-soft: #432424;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif; line-height: 1.65; }
+.wrap { max-width: 960px; margin: 0 auto; padding: 24px 16px 80px; }
+h1 { font-size: 1.5rem; margin: 0 0 4px; }
+.lead { color: var(--sub); margin: 0 0 20px; font-size: .92rem; }
+.badge { display: inline-block; background: var(--ok-soft); color: var(--ok); border-radius: 999px;
+  padding: 2px 10px; font-size: .78rem; font-weight: 600; margin-left: 6px; vertical-align: middle; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+.card h2 { font-size: 1.05rem; margin: 0 0 4px; }
+.card .hint { color: var(--sub); font-size: .85rem; margin: 0 0 14px; }
+.step { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px;
+  background: var(--accent); color: #fff; border-radius: 50%; font-size: .8rem; margin-right: 8px; }
+label { display: block; font-weight: 600; font-size: .88rem; margin: 14px 0 4px; }
+label small { color: var(--sub); font-weight: 400; }
+input[type=text], textarea, select { width: 100%; padding: 9px 11px; border: 1px solid var(--line);
+  border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; font-size: .93rem; }
+textarea { min-height: 96px; resize: vertical; }
+input:focus, textarea:focus, select:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 640px) { .row { grid-template-columns: 1fr; } }
+button { font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid var(--accent);
+  padding: 9px 16px; background: var(--accent); color: #fff; font-weight: 600; font-size: .92rem; }
+button.ghost { background: transparent; color: var(--accent); }
+button:disabled { opacity: .5; cursor: not-allowed; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.preview { margin-top: 10px; }
+.preview img { max-width: 100%; max-height: 260px; border-radius: 8px; border: 1px solid var(--line); }
+details { margin-top: 14px; }
+summary { cursor: pointer; font-weight: 600; font-size: .9rem; color: var(--accent); }
+.check { display: flex; gap: 10px; align-items: flex-start; padding: 8px 12px; border-radius: 8px; margin-top: 8px; font-size: .9rem; }
+.check.ok { background: var(--ok-soft); } .check.warn { background: var(--warn-soft); } .check.ng { background: var(--ng-soft); }
+.check .mark { font-weight: 700; min-width: 1.2em; }
+.check.ok .mark { color: var(--ok); } .check.warn .mark { color: var(--warn); } .check.ng .mark { color: var(--ng); }
+pre { white-space: pre-wrap; word-break: break-word; background: var(--bg); border: 1px solid var(--line);
+  border-radius: 8px; padding: 12px; font-size: .82rem; max-height: 340px; overflow: auto; margin: 10px 0 0; }
+.total { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.total .pct { font-size: 2.6rem; font-weight: 700; line-height: 1; }
+.total .pct small { font-size: 1rem; color: var(--sub); }
+.bar { height: 10px; background: var(--line); border-radius: 999px; overflow: hidden; margin: 6px 0 2px; }
+.bar > i { display: block; height: 100%; background: var(--accent); }
+.score { margin-top: 14px; }
+.score .head { display: flex; justify-content: space-between; gap: 10px; font-weight: 600; font-size: .92rem; }
+.score .reason { color: var(--sub); font-size: .86rem; margin: 2px 0 0; }
+ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
+.note { font-size: .8rem; color: var(--sub); margin-top: 8px; }
+.err { color: var(--ng); font-size: .88rem; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>訴求チェッカー<span class="badge">通信なし・ブラウザ内で完結</span></h1>
+  <p class="lead">訴求軸を先に決めて、クリエイティブとキャプションがその訴求に合っているかを確認します。ジャンルを問わず使えます。このページは外部へデータを送信しません。</p>
+
+  <!-- STEP 1 -->
+  <section class="card">
+    <h2><span class="step">1</span>訴求軸を入力</h2>
+    <p class="hint">ここが評価の基準になります。具体的に書くほど、判定の精度が上がります。</p>
+    <label>主訴求（この投稿で一番伝えたいこと）<small>必須</small></label>
+    <input type="text" id="appeal" placeholder="例：初めてでも失敗しない／期間限定の特別価格／職人のこだわりの手仕事">
+    <div class="row">
+      <div>
+        <label>ターゲット</label>
+        <input type="text" id="target" placeholder="例：20代後半の会社員女性">
+      </div>
+      <div>
+        <label>期待する行動（CTA）</label>
+        <input type="text" id="cta" placeholder="例：プロフィールのリンクから予約">
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label>媒体</label>
+        <select id="platform">
+          <option value="x">X（旧Twitter）</option>
+          <option value="instagram" selected>Instagram</option>
+          <option value="tiktok">TikTok</option>
+          <option value="facebook">Facebook</option>
+          <option value="youtube">YouTube</option>
+          <option value="other">その他</option>
+        </select>
+      </div>
+      <div>
+        <label>トーン＆マナー</label>
+        <input type="text" id="tone" placeholder="例：親しみやすく、押しつけない">
+      </div>
+    </div>
+    <details>
+      <summary>詳細設定（任意）</summary>
+      <label>訴求を表すキーワード<small>カンマ区切り。本文に入っているか自動確認します</small></label>
+      <input type="text" id="kw" placeholder="例：初めて, 簡単, 失敗しない">
+      <label>必須要素<small>カンマ区切り。例：商品名, 期間, 価格</small></label>
+      <input type="text" id="must" placeholder="例：商品名, 〜10/31まで">
+      <label>この投稿だけの追加評価観点<small>1行に1つ。AIの評価項目に加わります</small></label>
+      <textarea id="extra" placeholder="例：季節感が出ているか&#10;競合と差別化できているか"></textarea>
+    </details>
+  </section>
+
+  <!-- STEP 2 -->
+  <section class="card">
+    <h2><span class="step">2</span>投稿内容を入力</h2>
+    <p class="hint">画像の中身はこのツールでは解析しません。画像内の文言と、画像の内容の説明を書いてください。画像そのものはGeminiに添付します。</p>
+    <label>キャプション・投稿文</label>
+    <textarea id="caption" placeholder="投稿文を貼り付け"></textarea>
+    <div class="row">
+      <div>
+        <label>クリエイティブ内の文言<small>画像・動画に入っているテキスト</small></label>
+        <textarea id="imgtext" placeholder="例：「今だけ20%OFF」「10/31まで」"></textarea>
+      </div>
+      <div>
+        <label>クリエイティブの内容の説明<small>何が写っているか、構図、色味など</small></label>
+        <textarea id="imgdesc" placeholder="例：木のテーブルに商品を置いた明るい写真。右下にロゴ"></textarea>
+      </div>
+    </div>
+    <label>確認用の画像<small>任意。この端末内で表示するだけで、保存や送信はしません</small></label>
+    <input type="file" id="imgfile" accept="image/*">
+    <div class="preview" id="preview"></div>
+    <div class="actions">
+      <button id="runLocal">ルールチェックを実行</button>
+      <button class="ghost" id="makePrompt">Gemini用の指示文を作る</button>
+    </div>
+  </section>
+
+  <!-- LOCAL CHECK -->
+  <section class="card" id="localCard" hidden>
+    <h2>ルールチェック結果</h2>
+    <p class="hint">機械的に判定できる項目だけの結果です。内容が訴求に合っているかは、下の手順でGeminiに評価してもらいます。</p>
+    <div id="localResult"></div>
+    <details>
+      <summary>チェック辞書を編集</summary>
+      <label>NGワード<small>カンマ区切り（景表法・薬機法で注意が必要な表現の例を初期値にしています。社内ルールに合わせて編集してください）</small></label>
+      <textarea id="ngwords"></textarea>
+      <label>表記ゆれ辞書<small>1行に「NG表記→推奨表記」</small></label>
+      <textarea id="variants"></textarea>
+      <label>クレジット表記として探す語<small>カンマ区切り</small></label>
+      <input type="text" id="credits">
+      <label style="display:flex;gap:8px;align-items:center;font-weight:400"><input type="checkbox" id="needCredit"> クレジット表記を必須にする</label>
+      <p class="note">編集内容はこのブラウザにだけ保存されます。</p>
+    </details>
+  </section>
+
+  <!-- PROMPT -->
+  <section class="card" id="promptCard" hidden>
+    <h2><span class="step">3</span>Geminiで評価する</h2>
+    <p class="hint">① 下の指示文をコピー → ② Geminiに貼り付け、画像も一緒に添付 → ③ 返ってきた結果を、次の欄に貼り付けます。</p>
+    <pre id="promptOut"></pre>
+    <div class="actions"><button id="copyPrompt">指示文をコピー</button></div>
+    <p class="note">公開前のクリエイティブをGeminiに入れてよいかは、社内の規定に従ってください。</p>
+
+    <label style="margin-top:24px">Geminiの返答をここに貼り付け</label>
+    <textarea id="reply" placeholder="Geminiが出力したJSONを貼り付け"></textarea>
+    <div class="actions"><button id="parse">結果を表示</button></div>
+    <div id="parseErr" class="err"></div>
+  </section>
+
+  <!-- AI RESULT -->
+  <section class="card" id="resultCard" hidden>
+    <h2>訴求との合致度</h2>
+    <div class="total">
+      <div class="pct"><span id="pct">0</span><small>%</small></div>
+      <div style="flex:1;min-width:200px"><div class="bar"><i id="pctBar" style="width:0"></i></div>
+        <div class="note" id="pctNote"></div></div>
+    </div>
+    <div id="scores"></div>
+    <div id="lists"></div>
+    <p class="note">この数値はAIの評価をルーブリック（5段階）で点数化したものです。参考値として使い、最終判断は人が行ってください。</p>
+  </section>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+
+  var DEFAULTS = {
+    ngwords: "最安, 最安値, 絶対, 必ず, 100%, 完全, 永久, 日本一, 世界一, No.1, ナンバーワン, 業界初, 奇跡, 治る, 効く, 痩せる, 飛躍的",
+    variants: "下さい→ください\nサーバ→サーバー\nユーザ→ユーザー\nコンピュータ→コンピューター\nフォローして頂→フォローしていただ\n出来る→できる\n有難う→ありがとう",
+    credits: "Photo by, photo by, ©, (c), 画像提供, 写真提供, 提供：, 撮影：, Credit"
+  };
+  var LIMITS = {
+    x: { name: "X", max: 140, tags: 3 },
+    instagram: { name: "Instagram", max: 2200, tags: 30 },
+    tiktok: { name: "TikTok", max: 2200, tags: 10 },
+    facebook: { name: "Facebook", max: 63206, tags: 10 },
+    youtube: { name: "YouTube", max: 5000, tags: 15 },
+    other: { name: "その他", max: 0, tags: 0 }
+  };
+  var RUBRIC = [
+    { key: "appeal", label: "訴求との一致", weight: 2, desc: "主訴求が、キャプションとクリエイティブの両方から読み取れるか" },
+    { key: "consistency", label: "画像とキャプションの整合", weight: 1, desc: "画像の内容と文章が矛盾せず、同じメッセージを補強しているか" },
+    { key: "target", label: "ターゲットへの適合", weight: 1, desc: "指定したターゲットに刺さる言葉・見せ方か" },
+    { key: "tone", label: "トーン＆マナー", weight: 1, desc: "指定のトーンと一致し、一貫しているか" },
+    { key: "cta", label: "行動喚起の明確さ", weight: 1, desc: "次に何をしてほしいかが自然に伝わるか" }
+  ];
+
+  function store(k, v) { try { if (v === undefined) return localStorage.getItem("ac_" + k); localStorage.setItem("ac_" + k, v); } catch (e) { return null; } }
+  ["ngwords", "variants", "credits"].forEach(function (k) {
+    $(k).value = store(k) || DEFAULTS[k];
+    $(k).addEventListener("change", function () { store(k, $(k).value); });
+  });
+  $("needCredit").checked = store("needCredit") === "1";
+  $("needCredit").addEventListener("change", function () { store("needCredit", $("needCredit").checked ? "1" : "0"); });
+
+  function list(s) { return s.split(/[,、，\n]/).map(function (x) { return x.trim(); }).filter(Boolean); }
+  function v(id) { return $(id).value.trim(); }
+
+  // image preview (local only)
+  var objUrl = null;
+  $("imgfile").addEventListener("change", function (e) {
+    var f = e.target.files[0], box = $("preview");
+    box.textContent = "";
+    if (objUrl) { URL.revokeObjectURL(objUrl); objUrl = null; }
+    if (!f) return;
+    objUrl = URL.createObjectURL(f);
+    var img = document.createElement("img");
+    img.src = objUrl; img.alt = "確認用の画像";
+    box.appendChild(img);
+    var info = document.createElement("div");
+    info.className = "note";
+    img.onload = function () { info.textContent = img.naturalWidth + " × " + img.naturalHeight + " px ／ " + (f.size / 1024).toFixed(0) + " KB"; };
+    box.appendChild(info);
+  });
+
+  function add(box, level, text) {
+    var d = document.createElement("div"); d.className = "check " + level;
+    var m = document.createElement("span"); m.className = "mark";
+    m.textContent = level === "ok" ? "OK" : level === "warn" ? "注意" : "NG";
+    var t = document.createElement("span"); t.textContent = text;
+    d.appendChild(m); d.appendChild(t); box.appendChild(d);
+  }
+
+  function runLocal() {
+    var box = $("localResult"); box.textContent = "";
+    var cap = v("caption"), img = v("imgtext"), all = cap + "\n" + img;
+    if (!v("appeal")) add(box, "warn", "主訴求が未入力です。ステップ1に入力してください。");
+    if (!all.trim()) { add(box, "warn", "キャプションまたはクリエイティブ内の文言を入力してください。"); $("localCard").hidden = false; return; }
+
+    // length / hashtags
+    var lim = LIMITS[$("platform").value];
+    var len = Array.from(cap).length;
+    if (lim.max) {
+      add(box, len > lim.max ? "ng" : "ok", lim.name + "の文字数：" + len + " / " + lim.max + "（目安）");
+    } else add(box, "ok", "文字数：" + len);
+    var tags = (cap.match(/[#＃][^\s#＃]+/g) || []).length;
+    if (lim.tags) add(box, tags > lim.tags ? "warn" : "ok", "ハッシュタグ：" + tags + "個（" + lim.name + "の目安は" + lim.tags + "個以内）");
+
+    // appeal keywords
+    var kws = list(v("kw"));
+    if (kws.length) {
+      var hit = kws.filter(function (k) { return all.indexOf(k) >= 0; });
+      var miss = kws.filter(function (k) { return all.indexOf(k) < 0; });
+      add(box, hit.length === 0 ? "ng" : miss.length ? "warn" : "ok",
+        "訴求キーワード：" + hit.length + " / " + kws.length + " 個が含まれています" + (miss.length ? "（未使用：" + miss.join("、") + "）" : ""));
+    }
+    // must elements
+    var musts = list(v("must"));
+    if (musts.length) {
+      var mm = musts.filter(function (k) { return all.indexOf(k) < 0; });
+      add(box, mm.length ? "ng" : "ok", mm.length ? "必須要素が不足：" + mm.join("、") : "必須要素はすべて含まれています");
+    }
+    // CTA
+    if (v("cta")) {
+      var ctaLike = /リンク|プロフィール|予約|購入|申込|申し込|詳細|チェック|コメント|フォロー|保存|シェア|お問い合わせ|ご確認|こちら|DM|click|link/i.test(all);
+      add(box, ctaLike ? "ok" : "warn", ctaLike ? "行動を促す表現が見つかりました" : "行動を促す表現が見当たりません（期待する行動：" + v("cta") + "）");
+    }
+    // NG words
+    var ng = list($("ngwords").value).filter(function (w) { return all.toLowerCase().indexOf(w.toLowerCase()) >= 0; });
+    add(box, ng.length ? "ng" : "ok", ng.length ? "注意が必要な表現：" + ng.join("、") + "（根拠の有無・社内ルールを確認）" : "NGワードは見つかりませんでした");
+
+    // variants
+    var vh = [];
+    $("variants").value.split("\n").forEach(function (line) {
+      var p = line.split(/→|->/); if (p.length < 2) return;
+      var bad = p[0].trim(), good = p[1].trim();
+      if (bad && all.indexOf(bad) >= 0) vh.push("「" + bad + "」→「" + good + "」");
+    });
+    add(box, vh.length ? "warn" : "ok", vh.length ? "表記ゆれ候補：" + vh.join("、") : "表記ゆれ辞書に該当なし");
+
+    // character hygiene
+    var issues = [];
+    if (/[｡-ﾟ]/.test(all)) issues.push("半角カナ");
+    if (/[Ａ-Ｚａ-ｚ０-９]/.test(all)) issues.push("全角英数字");
+    if (/ {2,}|　{2,}/.test(all)) issues.push("連続スペース");
+    if (/[!?]{3,}|[！？]{3,}/.test(all)) issues.push("記号の連続");
+    if (/[。、]{2,}/.test(all)) issues.push("句読点の連続");
+    add(box, issues.length ? "warn" : "ok", issues.length ? "文字・記号の確認：" + issues.join("、") : "文字・記号に目立った問題なし");
+
+    // credit
+    if ($("needCredit").checked) {
+      var cr = list($("credits").value).some(function (w) { return all.indexOf(w) >= 0; });
+      add(box, cr ? "ok" : "ng", cr ? "クレジット表記が見つかりました" : "クレジット表記が見つかりません");
+    }
+    $("localCard").hidden = false;
+    $("localCard").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function currentRubric() {
+    var r = RUBRIC.slice();
+    list(v("extra")).forEach(function (t, i) { r.push({ key: "extra" + (i + 1), label: t, weight: 1, desc: "追加観点：" + t }); });
+    return r;
+  }
+
+  function buildPrompt() {
+    var r = currentRubric();
+    var L = [];
+    L.push("あなたはSNSマーケティングの審査担当です。次の「訴求軸」を基準に、添付した画像（クリエイティブ）とキャプションが、訴求にどれだけ合っているかを厳密に評価してください。");
+    L.push("");
+    L.push("## 訴求軸");
+    L.push("- 主訴求：" + (v("appeal") || "（未入力）"));
+    L.push("- ターゲット：" + (v("target") || "指定なし"));
+    L.push("- 期待する行動：" + (v("cta") || "指定なし"));
+    L.push("- 媒体：" + LIMITS[$("platform").value].name);
+    L.push("- トーン＆マナー：" + (v("tone") || "指定なし"));
+    if (v("must")) L.push("- 必須要素：" + v("must"));
+    L.push("");
+    L.push("## 投稿内容");
+    L.push("### キャプション");
+    L.push(v("caption") || "（未入力）");
+    L.push("### クリエイティブ内の文言");
+    L.push(v("imgtext") || "（なし／添付画像を確認してください）");
+    L.push("### クリエイティブの内容（投稿者の説明）");
+    L.push(v("imgdesc") || "（添付画像を確認してください）");
+    L.push("");
+    L.push("## 評価項目（各1〜5点の整数）");
+    r.forEach(function (x) { L.push("- " + x.key + "：" + x.label + "｜" + x.desc); });
+    L.push("");
+    L.push("## 採点基準");
+    L.push("5=完全に合致 / 4=概ね合致 / 3=部分的に合致 / 2=弱い / 1=合致しない・矛盾");
+    L.push("甘く採点せず、根拠が確認できない場合は3点以下にしてください。reasonには、画像またはキャプションの具体的な要素を引用して根拠を書いてください。");
+    L.push("");
+    L.push("## 出力形式");
+    L.push("説明文は付けず、次のJSONだけを出力してください。");
+    L.push("{");
+    L.push('  "scores": [');
+    L.push('    {"key": "appeal", "score": 1〜5の整数, "reason": "根拠"}');
+    L.push("  ],");
+    L.push('  "strengths": ["訴求に合っている点"],');
+    L.push('  "issues": ["訴求とずれている点・誤字脱字・矛盾"],');
+    L.push('  "improvements": ["具体的な改善案（3つ）"]');
+    L.push("}");
+    L.push("scoresには上記の評価項目すべて（key: " + r.map(function (x) { return x.key; }).join(", ") + "）を含めてください。");
+    $("promptOut").textContent = L.join("\n");
+    $("promptCard").hidden = false;
+    $("promptCard").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function copy(text, btn) {
+    var done = function () { var o = btn.textContent; btn.textContent = "コピーしました"; setTimeout(function () { btn.textContent = o; }, 1500); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } else fallback();
+    function fallback() {
+      var ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta);
+      ta.select(); try { document.execCommand("copy"); done(); } catch (e) {} document.body.removeChild(ta);
+    }
+  }
+
+  function parseReply() {
+    var err = $("parseErr"); err.textContent = "";
+    var raw = $("reply").value;
+    var s = raw.indexOf("{"), e = raw.lastIndexOf("}");
+    if (s < 0 || e <= s) { err.textContent = "JSONが見つかりません。Geminiの出力をそのまま貼り付けてください。"; return; }
+    var data;
+    try { data = JSON.parse(raw.slice(s, e + 1)); }
+    catch (x) { err.textContent = "JSONとして読み取れませんでした。「JSONだけをもう一度出力して」とGeminiに依頼してください。"; return; }
+    if (!data.scores || !data.scores.length) { err.textContent = "scores が含まれていません。"; return; }
+
+    var rubric = currentRubric(), map = {};
+    rubric.forEach(function (x) { map[x.key] = x; });
+    var sum = 0, wsum = 0, box = $("scores"); box.textContent = "";
+    data.scores.forEach(function (sc) {
+      var def = map[sc.key] || { label: String(sc.key), weight: 1 };
+      var n = Math.max(1, Math.min(5, Math.round(Number(sc.score) || 1)));
+      sum += n * def.weight; wsum += 5 * def.weight;
+      var d = document.createElement("div"); d.className = "score";
+      var h = document.createElement("div"); h.className = "head";
+      var a = document.createElement("span"); a.textContent = def.label;
+      var b = document.createElement("span"); b.textContent = n + " / 5";
+      h.appendChild(a); h.appendChild(b);
+      var bar = document.createElement("div"); bar.className = "bar";
+      var i = document.createElement("i"); i.style.width = (n * 20) + "%";
+      i.style.background = n >= 4 ? "var(--ok)" : n === 3 ? "var(--warn)" : "var(--ng)";
+      bar.appendChild(i);
+      var rs = document.createElement("div"); rs.className = "reason"; rs.textContent = sc.reason || "";
+      d.appendChild(h); d.appendChild(bar); d.appendChild(rs); box.appendChild(d);
+    });
+    var pct = wsum ? Math.round(sum / wsum * 100) : 0;
+    $("pct").textContent = pct;
+    $("pctBar").style.width = pct + "%";
+    $("pctBar").style.background = pct >= 80 ? "var(--ok)" : pct >= 60 ? "var(--warn)" : "var(--ng)";
+    $("pctNote").textContent = pct >= 80 ? "訴求とよく合っています" : pct >= 60 ? "概ね合っていますが、改善の余地があります" : "訴求とのずれが大きいです。改善案を確認してください";
+
+    var ls = $("lists"); ls.textContent = "";
+    [["良い点", data.strengths], ["課題・ずれている点", data.issues], ["改善案", data.improvements]].forEach(function (p) {
+      if (!p[1] || !p[1].length) return;
+      var h = document.createElement("h3"); h.style.cssText = "font-size:.95rem;margin:20px 0 0"; h.textContent = p[0];
+      var ul = document.createElement("ul"); ul.className = "list";
+      p[1].forEach(function (t) { var li = document.createElement("li"); li.textContent = String(t); ul.appendChild(li); });
+      ls.appendChild(h); ls.appendChild(ul);
+    });
+    $("resultCard").hidden = false;
+    $("resultCard").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  $("runLocal").addEventListener("click", runLocal);
+  $("makePrompt").addEventListener("click", buildPrompt);
+  $("copyPrompt").addEventListener("click", function () { copy($("promptOut").textContent, this); });
+  $("parse").addEventListener("click", parseReply);
+})();
+</script>
+</body>
+</html>
