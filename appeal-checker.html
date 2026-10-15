@@ -239,15 +239,41 @@ ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
 
   <!-- AI RESULT -->
   <section class="card" id="resultCard" hidden>
-    <h2>訴求との合致度</h2>
+    <h2>総合スコア（100点満点）</h2>
     <div class="total">
-      <div class="pct"><span id="pct">0</span><small>%</small></div>
+      <div class="pct"><span id="pct">0</span><small>点</small></div>
       <div style="flex:1;min-width:200px"><div class="bar"><i id="pctBar" style="width:0"></i></div>
         <div class="note" id="pctNote"></div></div>
     </div>
+    <div class="note" id="breakdown"></div>
+    <div class="warnbox" id="capNote" hidden></div>
     <div id="scores"></div>
     <div id="lists"></div>
-    <p class="note">この数値はAIの評価をルーブリック（5段階）で点数化したものです。参考値として使い、最終判断は人が行ってください。</p>
+    <p class="note">AIの評価を、固定の採点表（0〜5点）で点数化したものです。参考値として使い、最終判断は人が行ってください。</p>
+  </section>
+
+  <section class="card">
+    <h2>採点のしくみ</h2>
+    <details open>
+      <summary>総合スコアの出し方</summary>
+      <ul class="list">
+        <li><b>内容スコア（AI・80%）</b>：訴求との一致45点、行動の見込み35点の配点で、AIが7項目を0〜5点で採点し、100点に換算します。</li>
+        <li><b>ルールチェック（20%）</b>：キーワード、NGワード、表記ゆれ、文字数など、機械的に判定できる項目の点数です。</li>
+        <li><b>上限ルール</b>：主訴求の伝達が2点以下なら総合は59点まで、AIが重大リスク（誇大・虚偽・権利侵害のおそれなど）を指摘したら69点までに抑えます。他が良くても、訴求がずれた投稿に高得点が付かないようにするためです。</li>
+      </ul>
+    </details>
+    <details>
+      <summary>AI評価の7項目と配点</summary>
+      <ul class="list" id="rubricList"></ul>
+    </details>
+    <details>
+      <summary>画像・動画の中身をどこまで見ているか</summary>
+      <ul class="list">
+        <li><b>ルールチェック</b>：画像・動画の中身は見ていません。縦横比、解像度、長さなどの数値だけです。</li>
+        <li><b>コピペ方式</b>：画像・動画ファイルをGeminiに添付すれば、Gemini自身が映像と音声を見ます。このツールは中身を見ていません。</li>
+        <li><b>Gemini直接連携</b>：画像はそのまま、動画は12MB以下なら本体（音声含む）を送ります。それを超える場合は、等間隔のコマ画像（最大8枚、音声なし）で評価します。</li>
+      </ul>
+    </details>
   </section>
 </div>
 
@@ -269,13 +295,15 @@ ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
     other: { name: "その他", max: 0, tags: 0, ratios: [] }
   };
   var RUBRIC = [
-    { key: "appeal", label: "訴求との一致", weight: 2, desc: "主訴求が、キャプションとクリエイティブの両方から読み取れるか" },
-    { key: "consistency", label: "画像・動画とキャプションの整合", weight: 1, desc: "クリエイティブの内容と文章が矛盾せず、同じメッセージを補強しているか" },
-    { key: "target", label: "ターゲットへの適合", weight: 1, desc: "指定したターゲットに刺さる言葉・見せ方か" },
-    { key: "tone", label: "トーン＆マナー", weight: 1, desc: "指定のトーンと一致し、一貫しているか" },
-    { key: "cta", label: "行動喚起の明確さ", weight: 1, desc: "次に何をしてほしいかが自然に伝わるか" }
+    { layer: "A", key: "appeal", label: "訴求の伝達", weight: 20, desc: "主訴求が、キャプションとクリエイティブ（動画は冒頭・中盤・終盤）の両方から読み取れるか。5=両方で明確に伝わる／3=片方のみ、または曖昧／1=ほぼ伝わらない／0=別の訴求になっている" },
+    { layer: "A", key: "consistency", label: "画像・動画とキャプションの整合", weight: 15, desc: "クリエイティブの内容と文章が矛盾せず、同じメッセージを補強し合っているか。5=補強し合っている／3=矛盾はないが関連が薄い／1=軸がずれている／0=矛盾している" },
+    { layer: "A", key: "fit", label: "ターゲット・トーンへの適合", weight: 10, desc: "指定したターゲットに刺さる言葉・見せ方か、指定のトーン＆マナーと一致し一貫しているか。5=両方に適合／3=どちらかにずれがある／1=両方ずれている" },
+    { layer: "B", key: "attention", label: "注意獲得", weight: 10, desc: "スクロール中に手を止めさせる力があるか。画像=最初に目に入る要素、動画=冒頭3秒のフック。5=明確に目を引く／3=普通／1=埋もれる" },
+    { layer: "B", key: "clarity", label: "理解のしやすさ", weight: 8, desc: "3秒見て何の投稿か分かるか。情報の詰め込み過ぎ、文字の読みにくさがないか。5=一目で分かる／3=読めば分かる／1=何を伝えたいか分からない" },
+    { layer: "B", key: "motive", label: "動機づけ・信頼", weight: 9, desc: "ターゲットが自分ごと化でき、「やってみたい」と思える理由（ベネフィット・根拠・安心材料）があるか。誇大表現は信頼を下げる。5=納得できる理由が明確／3=理由が弱い／1=理由がない・信頼を損なう" },
+    { layer: "B", key: "cta", label: "行動導線", weight: 8, desc: "期待する行動が明確で、次に何をすればよいか、手間が少ないか。5=行動と場所が明確／3=行動はあるが曖昧／1=行動が分からない" }
   ];
-  var MAX_FRAMES = 8;
+  var MAX_FRAMES = 8, MAX_INLINE_VIDEO = 12 * 1048576, lastRule = null;
 
   function store(k, val) { try { if (val === undefined) return localStorage.getItem("ac_" + k); localStorage.setItem("ac_" + k, val); } catch (e) { return null; } }
   ["ngwords", "variants", "credits"].forEach(function (k) {
@@ -548,6 +576,7 @@ ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
     var total = maxSum ? Math.round(earnedSum / maxSum * 100) : 0;
     if (!all.trim()) total = 0;
     var g = grade(total);
+    lastRule = all.trim() ? total : null;
 
     var box = $("localResult"); box.textContent = "";
     warnings.forEach(function (w) { var d = document.createElement("div"); d.className = "check warn"; d.textContent = w; box.appendChild(d); });
@@ -600,14 +629,17 @@ ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
   /* ------------------------------------------------------------------ prompt */
   function currentRubric() {
     var r = RUBRIC.slice();
-    list(v("extra")).forEach(function (t, i) { r.push({ key: "extra" + (i + 1), label: t, weight: 1, desc: "追加観点：" + t }); });
+    list(v("extra")).forEach(function (t, i) { r.push({ layer: "X", key: "extra" + (i + 1), label: t, weight: 5, desc: "追加観点：" + t + "。5=十分に満たしている／3=部分的／1=満たしていない" }); });
     return r;
   }
   function creativeLabel(c, idx) { return (c.kind === "video" ? "動画" : "画像") + (idx + 1) + "（" + c.file.name + "）"; }
 
-  function buildPromptText(apiMode) {
-    var r = currentRubric(), L = [];
-    L.push("あなたはSNSマーケティングの審査担当です。次の「訴求軸」を基準に、クリエイティブ（画像・動画）とキャプションが、訴求にどれだけ合っているかを厳密に評価してください。");
+  function videoPlan(c, totalBytes) {
+    return c.kind === "video" && c.file.size <= MAX_INLINE_VIDEO && (totalBytes + c.file.size * 4 / 3) <= 18 * 1048576 ? "whole" : "frames";
+  }
+  function buildPromptText(apiMode, plan) {
+    var r = currentRubric(), L = [], layerName = { A: "訴求との一致", B: "行動の見込み", X: "追加観点" };
+    L.push("あなたはSNSマーケティングの審査担当です。次の「訴求軸」を基準に、クリエイティブ（画像・動画）とキャプションが、①訴求にどれだけ合っているか、②これを見たターゲットが行動を起こしそうか、を厳密に評価してください。好みや一般的な出来の良さではなく、訴求軸への合致を基準にします。");
     L.push("");
     L.push("## 訴求軸");
     L.push("- 主訴求：" + (v("appeal") || "（未入力）"));
@@ -623,30 +655,44 @@ ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
     L.push("### クリエイティブ");
     if (creatives.length) {
       creatives.forEach(function (c, i) {
-        L.push("- " + creativeLabel(c, i) + "：" + (c.w ? c.w + "×" + c.h + "px" : "") + (c.duration ? "、長さ" + fmtTime(c.duration) : ""));
+        var how = "";
+        if (apiMode && plan) how = plan[i] === "whole" ? "［動画本体を添付。映像と音声を確認してください］" : c.kind === "video" ? "［等間隔のコマ画像のみ添付。音声は含まれません］" : "";
+        L.push("- " + creativeLabel(c, i) + "：" + (c.w ? c.w + "×" + c.h + "px" : "") + (c.duration ? "、長さ" + fmtTime(c.duration) : "") + how);
       });
-      L.push(apiMode
-        ? "（画像は添付のとおり。動画は、等間隔に抜き出したコマ画像を時刻順に添付しています。音声は含まれません。）"
-        : "（添付した画像・動画ファイルを、実際に見て確認してください。動画は映像と音声・字幕の両方を確認してください。）");
+      if (!apiMode) L.push("（添付した画像・動画ファイルを実際に見て確認してください。動画は映像・音声・字幕・BGMのすべてを確認してください。）");
     } else L.push("（添付なし）");
     if (v("imgtext")) { L.push("### クリエイティブ内の文言（投稿者による補足）"); L.push(v("imgtext")); }
     if (v("imgdesc")) { L.push("### クリエイティブの内容（投稿者による補足）"); L.push(v("imgdesc")); }
+    L.push("※投稿者の補足と実際のクリエイティブが食い違う場合は、実際のクリエイティブを優先してください。");
     L.push("");
-    L.push("## 評価項目（各1〜5点の整数）");
-    r.forEach(function (x) { L.push("- " + x.key + "：" + x.label + "｜" + x.desc); });
+    L.push("## 評価の進め方（この順で考えてください）");
+    L.push("1. 観察：クリエイティブ（動画は冒頭3秒・中盤・終盤に分けて）とキャプションを個別に見て、事実だけを書き出す。見える文字、場面、音声やBGM、字幕、誤字脱字も含める。");
+    L.push("2. 想定ユーザーの視点：ターゲットの一人として、タイムラインを流し見している状況でこの投稿に出会ったと仮定する。(a)3秒で何の投稿か分かるか (b)自分ごととして感じるか (c)期待する行動を実際にとるか、を考える。");
+    L.push("3. 採点：1と2の根拠に基づいて、下の評価項目を採点する。");
     L.push("");
-    L.push("## 採点基準");
-    L.push("5=完全に合致 / 4=概ね合致 / 3=部分的に合致 / 2=弱い / 1=合致しない・矛盾");
-    L.push("甘く採点せず、根拠が確認できない場合は3点以下にしてください。reasonには、画像・動画・キャプションの具体的な要素を引用して根拠を書いてください。");
+    L.push("## 評価項目（各0〜5点の整数）");
+    var cur = "";
+    r.forEach(function (x) {
+      if (x.layer !== cur) { cur = x.layer; L.push("【" + layerName[cur] + "】"); }
+      L.push("- " + x.key + "（配点" + x.weight + "）：" + x.label + "｜" + x.desc);
+    });
+    L.push("");
+    L.push("## 採点ルール");
+    L.push("- 5=申し分ない／4=概ね良い／3=部分的・普通／2=弱い／1=ほぼ満たさない／0=満たさない・逆効果。");
+    L.push("- 5点は例外的です。根拠が確認できない場合は3点以下にしてください。");
+    L.push("- reasonには、画像・動画・キャプションの具体的な要素（文言や場面、時刻）を引用して根拠を書いてください。");
+    L.push("- 景表法・薬機法・著作権などの観点で、誇大表現、事実と確認できない断定、権利侵害のおそれがある場合は、critical_risksに具体的に書いてください。軽微なものは issues に書きます。");
     L.push("");
     L.push("## 出力形式");
     L.push("説明文は付けず、次のJSONだけを出力してください。");
     L.push("{");
-    L.push('  "scores": [{"key": "appeal", "score": 1〜5の整数, "reason": "根拠"}],');
-    L.push('  "creatives": [{"name": "ファイル名", "detected": "写っているもの・場面・雰囲気", "visible_text": "クリエイティブ内に見える文字（そのまま）", "typos": ["クリエイティブ内の誤字脱字候補"]}],');
+    L.push('  "scores": [{"key": "appeal", "score": 0〜5の整数, "reason": "根拠"}],');
+    L.push('  "viewer": {"first_impression": "3秒で受ける印象", "action": "する／迷う／しない のいずれか", "reason": "そう判断した理由", "barrier": "行動を妨げる一番の要因"},');
+    L.push('  "creatives": [{"name": "ファイル名", "detected": "写っているもの・場面・雰囲気", "visible_text": "クリエイティブ内に見える文字（そのまま）", "typos": ["誤字脱字候補"], "hook": "動画なら冒頭3秒の評価（画像は空）", "has_audio": true/false/null, "timeline": [{"time": "0:00-0:03", "observation": "動画の場面ごとの観察（画像は空配列）"}]}],');
     L.push('  "caption_typos": ["キャプションの誤字脱字・表記ゆれ候補"],');
+    L.push('  "critical_risks": ["重大なリスク（なければ空配列）"],');
     L.push('  "strengths": ["訴求に合っている点"],');
-    L.push('  "issues": ["訴求とずれている点・矛盾"],');
+    L.push('  "issues": ["訴求とずれている点・矛盾・軽微なリスク"],');
     L.push('  "improvements": ["具体的な改善案（3つ）"]');
     L.push("}");
     L.push("scoresには上記の評価項目すべて（key: " + r.map(function (x) { return x.key; }).join(", ") + "）を含めてください。creativesには添付したクリエイティブすべてを含めてください。");
@@ -669,37 +715,62 @@ ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
   /* ------------------------------------------------------------------ result */
   function showResult(raw, errBox) {
     errBox.textContent = "";
-    var s = raw.indexOf("{"), e = raw.lastIndexOf("}");
-    if (s < 0 || e <= s) { errBox.textContent = "JSONが見つかりません。Geminiの出力をそのまま貼り付けてください。"; return false; }
+    var s0 = raw.indexOf("{"), e0 = raw.lastIndexOf("}");
+    if (s0 < 0 || e0 <= s0) { errBox.textContent = "JSONが見つかりません。Geminiの出力をそのまま貼り付けてください。"; return false; }
     var data;
-    try { data = JSON.parse(raw.slice(s, e + 1)); }
+    try { data = JSON.parse(raw.slice(s0, e0 + 1)); }
     catch (x) { errBox.textContent = "JSONとして読み取れませんでした。「JSONだけをもう一度出力して」とGeminiに依頼してください。"; return false; }
     if (!data.scores || !data.scores.length) { errBox.textContent = "scores が含まれていません。"; return false; }
 
-    var rubric = currentRubric(), map = {};
-    rubric.forEach(function (x) { map[x.key] = x; });
-    var sum = 0, wsum = 0, box = $("scores"); box.textContent = "";
-    data.scores.forEach(function (sc) {
-      var def = map[sc.key] || { label: String(sc.key), weight: 1 };
-      var n = Math.max(1, Math.min(5, Math.round(Number(sc.score) || 1)));
-      sum += n * def.weight; wsum += 5 * def.weight;
-      var d = document.createElement("div"); d.className = "score";
-      var h = document.createElement("div"); h.className = "head";
-      var a = document.createElement("span"); a.textContent = def.label;
-      var b = document.createElement("span"); b.textContent = n + " / 5";
-      h.appendChild(a); h.appendChild(b);
-      var bar = document.createElement("div"); bar.className = "bar";
-      var i = document.createElement("i"); i.style.width = (n * 20) + "%";
-      i.style.background = n >= 4 ? "var(--ok)" : n === 3 ? "var(--warn)" : "var(--ng)";
-      bar.appendChild(i);
-      var rs = document.createElement("div"); rs.className = "reason"; rs.textContent = sc.reason || "";
-      d.appendChild(h); d.appendChild(bar); d.appendChild(rs); box.appendChild(d);
+    var rubric = currentRubric(), byKey = {};
+    data.scores.forEach(function (sc) { byKey[sc.key] = sc; });
+    var LAYERS = [{ id: "A", name: "訴求との一致" }, { id: "B", name: "行動の見込み" }, { id: "X", name: "追加観点" }];
+    var earnedAll = 0, maxAll = 0, appealScore = null, box = $("scores"); box.textContent = "";
+    function colorN(n) { return n >= 4 ? "var(--ok)" : n >= 3 ? "var(--warn)" : "var(--ng)"; }
+    LAYERS.forEach(function (layer) {
+      var items = rubric.filter(function (x) { return x.layer === layer.id; });
+      if (!items.length) return;
+      var wrap = document.createElement("div"); wrap.className = "cat";
+      var head = document.createElement("div"); head.className = "head";
+      var hn = document.createElement("span"), hp = document.createElement("span"); head.appendChild(hn); head.appendChild(hp);
+      var hbar = document.createElement("div"); hbar.className = "bar"; var hi = document.createElement("i"); hbar.appendChild(hi);
+      wrap.appendChild(head); wrap.appendChild(hbar);
+      var lE = 0, lM = 0;
+      items.forEach(function (def) {
+        var sc = byKey[def.key], d = document.createElement("div"); d.className = "score";
+        var h = document.createElement("div"); h.className = "head";
+        var a = document.createElement("span"), b = document.createElement("span"); a.textContent = def.label; h.appendChild(a); h.appendChild(b);
+        d.appendChild(h);
+        if (!sc) { b.textContent = "未評価"; var rs0 = document.createElement("div"); rs0.className = "reason"; rs0.textContent = "AIの出力に含まれていなかったため、集計から除外しました。"; d.appendChild(rs0); wrap.appendChild(d); return; }
+        var n = Math.max(0, Math.min(5, Math.round(Number(sc.score) || 0))), pts = n / 5 * def.weight;
+        lE += pts; lM += def.weight; if (def.key === "appeal") appealScore = n;
+        b.textContent = n + " / 5（" + (Math.round(pts * 10) / 10) + " / " + def.weight + "点）";
+        var bar = document.createElement("div"); bar.className = "bar"; var i = document.createElement("i");
+        i.style.width = (n * 20) + "%"; i.style.background = colorN(n); bar.appendChild(i); d.appendChild(bar);
+        var rs = document.createElement("div"); rs.className = "reason"; rs.textContent = sc.reason || ""; d.appendChild(rs);
+        wrap.appendChild(d);
+      });
+      earnedAll += lE; maxAll += lM;
+      hn.textContent = layer.name; hp.textContent = Math.round(lE) + " / " + lM + "点";
+      var lp = lM ? lE / lM * 100 : 0; hi.style.width = lp + "%"; hi.style.background = lp >= 75 ? "var(--ok)" : lp >= 60 ? "var(--warn)" : "var(--ng)";
+      box.appendChild(wrap);
     });
-    var pct = wsum ? Math.round(sum / wsum * 100) : 0;
-    $("pct").textContent = pct;
-    $("pctBar").style.width = pct + "%";
-    $("pctBar").style.background = pct >= 80 ? "var(--ok)" : pct >= 60 ? "var(--warn)" : "var(--ng)";
-    $("pctNote").textContent = pct >= 80 ? "訴求とよく合っています" : pct >= 60 ? "概ね合っていますが、改善の余地があります" : "訴求とのずれが大きいです。改善案を確認してください";
+
+    var content = maxAll ? Math.round(earnedAll / maxAll * 100) : 0;
+    var risks = Array.isArray(data.critical_risks) ? data.critical_risks.filter(Boolean) : [];
+    var cap = 100, caps = [];
+    if (appealScore !== null && appealScore <= 2) { cap = Math.min(cap, 59); caps.push("主訴求が十分に伝わっていない（訴求の伝達が2点以下）ため、総合は59点を上限にしました。"); }
+    if (risks.length) { cap = Math.min(cap, 69); caps.push("重大なリスクが指摘されたため、総合は69点を上限にしました。"); }
+    var raw2 = lastRule !== null ? content * 0.8 + lastRule * 0.2 : content;
+    var total = Math.round(Math.min(raw2, cap));
+    $("pct").textContent = total;
+    $("pctBar").style.width = total + "%";
+    $("pctBar").style.background = total >= 75 ? "var(--ok)" : total >= 60 ? "var(--warn)" : "var(--ng)";
+    $("pctNote").textContent = total >= 90 ? "訴求によく合っていて、行動も見込めます" : total >= 75 ? "概ね良好です。改善案で伸ばせます" : total >= 60 ? "改善の余地があります" : "訴求とのずれが大きいです。改善案を確認してください";
+    $("breakdown").textContent = lastRule !== null
+      ? "内訳：内容（AI）" + content + "点 × 80% ＋ ルールチェック " + lastRule + "点 × 20%（ルールチェックは最後に実行した結果）"
+      : "内訳：内容（AI）" + content + "点のみ。ルールチェックを実行すると、20%分が加わります。";
+    var cn = $("capNote"); cn.hidden = !caps.length; cn.textContent = caps.join(" ");
 
     var ls = $("lists"); ls.textContent = "";
     function heading(t) { var h = document.createElement("h3"); h.className = "sec"; h.textContent = t; ls.appendChild(h); }
@@ -708,13 +779,26 @@ ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
       arr.forEach(function (t) { var li = document.createElement("li"); li.textContent = String(t); ul.appendChild(li); });
       ls.appendChild(ul);
     }
+    function detLine(d, k, val) { if (!val) return; var b = document.createElement("b"); b.textContent = k; var p = document.createElement("div"); p.textContent = String(val); d.appendChild(b); d.appendChild(p); }
+    if (data.viewer) {
+      heading("想定ユーザーの反応");
+      var vd = document.createElement("div"); vd.className = "det";
+      detLine(vd, "3秒で受ける印象", data.viewer.first_impression);
+      detLine(vd, "行動するか", (data.viewer.action || "") + (data.viewer.reason ? "：" + data.viewer.reason : ""));
+      detLine(vd, "行動を妨げる要因", data.viewer.barrier);
+      ls.appendChild(vd);
+    }
+    if (risks.length) { heading("重大なリスク"); bullets(risks); }
     if (data.creatives && data.creatives.length) {
       heading("クリエイティブの読み取り結果");
       data.creatives.forEach(function (c) {
         var d = document.createElement("div"); d.className = "det";
-        function line(k, val) { if (!val) return; var b = document.createElement("b"); b.textContent = k; var p = document.createElement("div"); p.textContent = String(val); d.appendChild(b); d.appendChild(p); }
-        line("ファイル", c.name); line("検出した内容", c.detected); line("見える文字", c.visible_text);
-        if (c.typos && c.typos.length) line("誤字脱字の候補", c.typos.join(" ／ "));
+        detLine(d, "ファイル", c.name); detLine(d, "検出した内容", c.detected); detLine(d, "見える文字", c.visible_text);
+        detLine(d, "冒頭3秒（動画）", c.hook);
+        if (c.has_audio === true || c.has_audio === false) detLine(d, "音声", c.has_audio ? "あり" : "なし");
+        if (c.timeline && c.timeline.length) detLine(d, "場面ごとの観察", c.timeline.map(function (t) { return (t.time || "") + "　" + (t.observation || ""); }).join("\n"));
+        if (c.typos && c.typos.length) detLine(d, "誤字脱字の候補", c.typos.join(" ／ "));
+        d.style.whiteSpace = "pre-wrap";
         ls.appendChild(d);
       });
     }
@@ -737,32 +821,64 @@ ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
   ["apiOn", "apiConsent"].forEach(function (id) { $(id).addEventListener("change", updateMode); });
   $("apiKey").addEventListener("input", updateMode);
 
+  function fileB64(f) {
+    return new Promise(function (res, rej) {
+      var r = new FileReader(); r.onload = function () { res(String(r.result).split(",")[1]); }; r.onerror = function () { rej(new Error("ファイルを読み込めません")); };
+      r.readAsDataURL(f);
+    });
+  }
+  function videoMime(f) { var t = f.type || "video/mp4"; return t === "video/quicktime" ? "video/mov" : t; }
+
   function runApi() {
     var st = $("apiStatus"), btn = $("runApi");
     if (!v("caption") && !creatives.length) { st.textContent = "キャプションまたはクリエイティブを入力してください。"; return; }
     if (creatives.some(function (c) { return c.busy; })) { st.textContent = "クリエイティブの読み取り中です。少し待ってからもう一度押してください。"; return; }
-    var parts = [{ text: buildPromptText(true) }], bytes = 0;
+    // decide how each creative is sent
+    var plan = [], est = 0, summary = [];
     creatives.forEach(function (c, i) {
-      if (c.kind === "image" && c.data) {
-        parts.push({ text: "【" + creativeLabel(c, i) + "】" });
-        parts.push({ inline_data: { mime_type: "image/jpeg", data: c.data.split(",")[1] } });
-        bytes += c.data.length;
-      } else if (c.kind === "video") {
-        c.frames.forEach(function (f) {
-          parts.push({ text: "【" + creativeLabel(c, i) + " " + fmtTime(f.t) + "付近のコマ】" });
-          parts.push({ inline_data: { mime_type: "image/jpeg", data: f.data.split(",")[1] } });
-          bytes += f.data.length;
-        });
-      }
+      var mode = c.kind === "image" ? "image" : videoPlan(c, est);
+      if (mode === "whole") est += c.file.size * 4 / 3;
+      else if (c.kind === "image") est += c.data ? c.data.length : 0;
+      else est += c.frames.reduce(function (n, f) { return n + f.data.length; }, 0);
+      plan.push(mode);
+      if (c.kind === "video") summary.push("動画" + (i + 1) + "＝" + (mode === "whole" ? "本体（音声含む）" : (c.frames.length ? "コマ画像" + c.frames.length + "枚（音声なし）" : "送信不可")));
     });
-    if (bytes > 18 * 1048576) { st.textContent = "添付が大きすぎます（約" + (bytes / 1048576).toFixed(0) + "MB）。ファイル数を減らしてください。"; return; }
+    if (est > 18 * 1048576) { st.textContent = "添付が大きすぎます（約" + (est / 1048576).toFixed(0) + "MB）。ファイル数を減らしてください。"; return; }
+    var unsendable = creatives.some(function (c, i) { return plan[i] === "frames" && c.kind === "video" && !c.frames.length; });
+    if (unsendable) { st.textContent = "読み取れず、サイズも大きいため送信できない動画があります。MP4(H.264)に変換するか、コピペ方式を使ってください。"; return; }
+    btn.disabled = true; $("parseErr").textContent = "";
+    st.textContent = "送信準備中…" + (summary.length ? "（" + summary.join("、") + "）" : "");
+
+    var parts = [{ text: buildPromptText(true, plan) }];
+    var prep = creatives.reduce(function (chain, c, i) {
+      return chain.then(function () {
+        if (c.kind === "image") {
+          if (!c.data) return;
+          parts.push({ text: "【" + creativeLabel(c, i) + "】" });
+          parts.push({ inline_data: { mime_type: "image/jpeg", data: c.data.split(",")[1] } });
+        } else if (plan[i] === "whole") {
+          return fileB64(c.file).then(function (b64) {
+            parts.push({ text: "【" + creativeLabel(c, i) + "：動画本体】" });
+            parts.push({ inline_data: { mime_type: videoMime(c.file), data: b64 } });
+          });
+        } else {
+          c.frames.forEach(function (f) {
+            parts.push({ text: "【" + creativeLabel(c, i) + " " + fmtTime(f.t) + "付近のコマ】" });
+            parts.push({ inline_data: { mime_type: "image/jpeg", data: f.data.split(",")[1] } });
+          });
+        }
+      });
+    }, Promise.resolve());
+
     var model = $("apiModel").value.trim() || "gemini-2.5-flash";
-    var ctl = new AbortController(), timer = setTimeout(function () { ctl.abort(); }, 120000);
-    btn.disabled = true; st.textContent = "Geminiに送信して評価中…（最大2分）"; $("parseErr").textContent = "";
-    fetch("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent", {
-      method: "POST", signal: ctl.signal,
-      headers: { "Content-Type": "application/json", "x-goog-api-key": $("apiKey").value.trim() },
-      body: JSON.stringify({ contents: [{ role: "user", parts: parts }], generationConfig: { responseMimeType: "application/json", temperature: 0.2 } })
+    var ctl = new AbortController(), timer = setTimeout(function () { ctl.abort(); }, 180000);
+    prep.then(function () {
+      st.textContent = "Geminiに送信して評価中…（最大3分）" + (summary.length ? "［" + summary.join("、") + "］" : "");
+      return fetch("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent", {
+        method: "POST", signal: ctl.signal,
+        headers: { "Content-Type": "application/json", "x-goog-api-key": $("apiKey").value.trim() },
+        body: JSON.stringify({ contents: [{ role: "user", parts: parts }], generationConfig: { responseMimeType: "application/json", temperature: 0.2 } })
+      });
     }).then(function (res) {
       return res.json().catch(function () { return {}; }).then(function (j) {
         if (!res.ok) throw new Error("HTTP " + res.status + (j.error && j.error.message ? "：" + j.error.message : ""));
@@ -774,13 +890,17 @@ ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
     }).then(function (text) {
       $("reply").value = text;
       var ok = showResult(text, st);
-      if (ok) st.textContent = "評価が完了しました。";
+      if (ok) st.textContent = "評価が完了しました。" + (summary.length ? "［" + summary.join("、") + "］" : "");
     }).catch(function (err) {
       st.textContent = "評価に失敗しました：" + (err.name === "AbortError" ? "時間切れです" : err.message) +
         "\n（会社のネットワークでGoogleのAPIがブロックされている場合は、コピペ方式を使ってください）";
     }).then(function () { clearTimeout(timer); updateMode(); });
   }
 
+  (function () {
+    var ul = $("rubricList"), nm = { A: "訴求との一致", B: "行動の見込み" };
+    RUBRIC.forEach(function (x) { var li = document.createElement("li"); li.textContent = "【" + nm[x.layer] + "・" + x.weight + "点】" + x.label + "：" + x.desc; ul.appendChild(li); });
+  })();
   $("runLocal").addEventListener("click", runLocal);
   $("makePrompt").addEventListener("click", buildPrompt);
   $("copyPrompt").addEventListener("click", function () { copy($("promptOut").textContent, this); });
