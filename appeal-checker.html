@@ -74,6 +74,11 @@ pre { white-space: pre-wrap; word-break: break-word; background: var(--bg); bord
 .score { margin-top: 14px; }
 .score .head { display: flex; justify-content: space-between; gap: 10px; font-weight: 600; font-size: .92rem; }
 .score .reason { color: var(--sub); font-size: .86rem; margin: 2px 0 0; }
+.gauge-wrap { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; margin: 6px 0 4px; }
+.gauge { width: 150px; height: 150px; }
+.gradeline { font-size: 1.15rem; font-weight: 700; }
+.cat { margin-top: 18px; }
+.cat .head { display: flex; justify-content: space-between; gap: 10px; font-weight: 600; font-size: .92rem; }
 .sec { font-size: .95rem; margin: 22px 0 0; }
 ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
 .det { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-top: 8px; font-size: .88rem; }
@@ -88,16 +93,6 @@ ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
 <div class="wrap">
   <h1>訴求チェッカー<span class="badge" id="modeBadge">通信なし・ブラウザ内で完結</span></h1>
   <p class="lead">訴求軸を先に決めて、画像・動画・キャプションがその訴求に合っているかを確認します。ジャンルを問わず使えます。初期状態では外部へデータを送信しません。</p>
-
-  <section class="card">
-    <h2>お試しサンプル</h2>
-    <p class="hint">架空のコーヒー豆サブスクを題材に、訴求にきれいに合っている例と、大きくずれている例を自動入力します（画像もこの場で生成）。入力済みの内容は上書きされます。</p>
-    <div class="actions" style="margin-top:0">
-      <button id="sampleHigh">高得点を狙う例を入れる</button>
-      <button class="ghost" id="sampleLow">低得点になる例を入れる</button>
-    </div>
-    <div class="note" id="sampleNote"></div>
-  </section>
 
   <!-- STEP 1 -->
   <section class="card">
@@ -212,8 +207,8 @@ ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
 
   <!-- LOCAL CHECK -->
   <section class="card" id="localCard" hidden>
-    <h2>ルールチェック結果</h2>
-    <p class="hint">機械的に判定できる項目だけの結果です。内容が訴求に合っているかは、Geminiによる評価で確認します。</p>
+    <h2>ルールチェックスコア（100点満点）</h2>
+    <p class="hint">訴求の反映、CTA、表現リスク、文章の品質、媒体への適合をルールで採点します。内容が訴求に合っているかは、Geminiによる評価で確認します。</p>
     <div id="localResult"></div>
     <details>
       <summary>チェック辞書を編集</summary>
@@ -468,83 +463,136 @@ ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
   drop.addEventListener("drop", function (e) { e.preventDefault(); drop.classList.remove("over"); addFiles(e.dataTransfer.files); });
   $("crfile").addEventListener("change", function (e) { addFiles(e.target.files); e.target.value = ""; });
 
-  /* ------------------------------------------------------------------ rule checks */
-  function add(box, level, text) {
-    var d = document.createElement("div"); d.className = "check " + level;
-    var m = document.createElement("span"); m.className = "mark";
-    m.textContent = level === "ok" ? "OK" : level === "warn" ? "注意" : "NG";
-    var t = document.createElement("span"); t.textContent = text;
-    d.appendChild(m); d.appendChild(t); box.appendChild(d);
-  }
+  /* ------------------------------------------------------------------ rule checks (scored, 100 pts) */
+  function grade(pct) { return pct >= 90 ? ["優秀", "ok"] : pct >= 75 ? ["良好", "ok"] : pct >= 60 ? ["要改善", "warn"] : ["要修正", "ng"]; }
+  function colorOf(pct) { return pct >= 75 ? "var(--ok)" : pct >= 60 ? "var(--warn)" : "var(--ng)"; }
 
   function runLocal() {
-    var box = $("localResult"); box.textContent = "";
     var cap = v("caption"), img = v("imgtext"), all = cap + "\n" + img;
-    if (!v("appeal")) add(box, "warn", "主訴求が未入力です。ステップ1に入力してください。");
-    if (!all.trim()) { add(box, "warn", "キャプションを入力してください。"); $("localCard").hidden = false; return; }
+    var cats = [];
+    function cat(name, max) { var c = { name: name, max: max, lost: 0, items: [] }; cats.push(c); return c; }
+    function item(c, level, text, lost) { c.items.push({ level: level, text: text }); c.lost += (lost || 0); }
+    var hasKw = list(v("kw")).length > 0, hasMust = list(v("must")).length > 0, lim = LIMITS[$("platform").value];
 
-    var lim = LIMITS[$("platform").value];
-    var len = Array.from(cap).length;
-    if (lim.max) add(box, len > lim.max ? "ng" : "ok", lim.name + "の文字数：" + len + " / " + lim.max + "（目安）");
-    else add(box, "ok", "文字数：" + len);
-    var tags = (cap.match(/[#＃][^\s#＃]+/g) || []).length;
-    if (lim.tags) add(box, tags > lim.tags ? "warn" : "ok", "ハッシュタグ：" + tags + "個（" + lim.name + "の目安は" + lim.tags + "個以内）");
+    var warnings = [];
+    if (!v("appeal")) warnings.push("主訴求が未入力です。ステップ1に入力してください。");
+    if (!all.trim()) warnings.push("キャプションが未入力です。");
 
-    // creative files
-    creatives.forEach(function (c, i) {
-      var label = (c.kind === "video" ? "動画" : "画像") + (i + 1);
-      if (c.error) { add(box, "ng", label + "：" + c.error); return; }
-      if (!c.w) return;
-      var ratio = c.w / c.h, info = label + "：" + c.w + "×" + c.h + "px" + (c.duration ? "、" + fmtTime(c.duration) : "");
-      var level = "ok", note = "";
-      if (lim.ratios.length) {
-        var okRatio = lim.ratios.some(function (r) { return Math.abs(ratio - r) / r < 0.03; });
-        if (!okRatio) { level = "warn"; note = "（" + lim.name + "の推奨比率から外れています）"; }
+    // 1. appeal reflection (35)
+    if (hasKw || hasMust) {
+      var ca = cat("訴求の反映", 35), kwMax = hasMust ? 20 : 35, muMax = hasKw ? 15 : 35;
+      if (hasKw) {
+        var kws = list(v("kw")), hit = kws.filter(function (k) { return all.indexOf(k) >= 0; }), miss = kws.filter(function (k) { return all.indexOf(k) < 0; });
+        item(ca, hit.length === kws.length ? "ok" : hit.length ? "warn" : "ng",
+          "訴求キーワード：" + hit.length + " / " + kws.length + " 個が含まれています" + (miss.length ? "（未使用：" + miss.join("、") + "）" : ""),
+          Math.round(kwMax * (1 - hit.length / kws.length)));
       }
-      if (Math.min(c.w, c.h) < 720) { level = level === "ok" ? "warn" : level; note += "（短辺が720px未満で、画質が荒く見える可能性があります）"; }
-      add(box, level, info + note);
-    });
-    if (!creatives.length) add(box, "warn", "クリエイティブ（画像・動画）が未追加です。");
-
-    var kws = list(v("kw"));
-    if (kws.length) {
-      var hit = kws.filter(function (k) { return all.indexOf(k) >= 0; });
-      var miss = kws.filter(function (k) { return all.indexOf(k) < 0; });
-      add(box, hit.length === 0 ? "ng" : miss.length ? "warn" : "ok",
-        "訴求キーワード：" + hit.length + " / " + kws.length + " 個が含まれています" + (miss.length ? "（未使用：" + miss.join("、") + "）" : ""));
+      if (hasMust) {
+        var ms = list(v("must")), mh = ms.filter(function (k) { return all.indexOf(k) >= 0; }), mm = ms.filter(function (k) { return all.indexOf(k) < 0; });
+        item(ca, mm.length === 0 ? "ok" : mh.length ? "warn" : "ng",
+          mm.length ? "必須要素が不足：" + mm.join("、") : "必須要素はすべて含まれています", Math.round(muMax * (mm.length / ms.length)));
+      }
     }
-    var musts = list(v("must"));
-    if (musts.length) {
-      var mm = musts.filter(function (k) { return all.indexOf(k) < 0; });
-      add(box, mm.length ? "ng" : "ok", mm.length ? "必須要素が不足：" + mm.join("、") : "必須要素はすべて含まれています");
-    }
+    // 2. CTA (15)
     if (v("cta")) {
+      var cc = cat("行動喚起（CTA）", 15);
       var ctaLike = /リンク|プロフィール|予約|購入|申込|申し込|詳細|チェック|コメント|フォロー|保存|シェア|お問い合わせ|ご確認|こちら|DM|click|link/i.test(all);
-      add(box, ctaLike ? "ok" : "warn", ctaLike ? "行動を促す表現が見つかりました" : "行動を促す表現が見当たりません（期待する行動：" + v("cta") + "）");
+      item(cc, ctaLike ? "ok" : "ng", ctaLike ? "行動を促す表現が見つかりました" : "行動を促す表現が見当たりません（期待する行動：" + v("cta") + "）", ctaLike ? 0 : 15);
     }
+    // 3. risk (20)
+    var cr = cat("表現リスク", 20);
     var ng = list($("ngwords").value).filter(function (w) { return all.toLowerCase().indexOf(w.toLowerCase()) >= 0; });
-    add(box, ng.length ? "ng" : "ok", ng.length ? "注意が必要な表現：" + ng.join("、") + "（根拠の有無・社内ルールを確認）" : "NGワードは見つかりませんでした");
-
-    var vh = [];
+    item(cr, ng.length === 0 ? "ok" : ng.length < 3 ? "warn" : "ng",
+      ng.length ? "注意が必要な表現（" + ng.length + "件）：" + ng.join("、") + "（根拠の有無・社内ルールを確認）" : "NGワードは見つかりませんでした", ng.length * 5);
+    // 4. text quality (15)
+    var cq = cat("文章の品質", 15), vh = [];
     $("variants").value.split("\n").forEach(function (line) {
       var p = line.split(/→|->/); if (p.length < 2) return;
       var bad = p[0].trim(), good = p[1].trim();
       if (bad && all.indexOf(bad) >= 0) vh.push("「" + bad + "」→「" + good + "」");
     });
-    add(box, vh.length ? "warn" : "ok", vh.length ? "表記ゆれ候補：" + vh.join("、") : "表記ゆれ辞書に該当なし");
-
+    item(cq, vh.length ? "warn" : "ok", vh.length ? "表記ゆれ候補（" + vh.length + "件）：" + vh.join("、") : "表記ゆれ辞書に該当なし", vh.length * 4);
     var issues = [];
     if (/[｡-ﾟ]/.test(all)) issues.push("半角カナ");
     if (/[Ａ-Ｚａ-ｚ０-９]/.test(all)) issues.push("全角英数字");
     if (/ {2,}|　{2,}/.test(all)) issues.push("連続スペース");
     if (/[!?]{3,}|[！？]{3,}/.test(all)) issues.push("記号の連続");
     if (/[。、]{2,}/.test(all)) issues.push("句読点の連続");
-    add(box, issues.length ? "warn" : "ok", issues.length ? "文字・記号の確認：" + issues.join("、") : "文字・記号に目立った問題なし");
-
+    item(cq, issues.length ? "warn" : "ok", issues.length ? "文字・記号の確認：" + issues.join("、") : "文字・記号に目立った問題なし", issues.length * 3);
+    // 5. media fit (15)
+    var cm = cat("媒体への適合", 15), len = Array.from(cap).length;
+    if (lim.max) item(cm, len > lim.max ? "ng" : "ok", lim.name + "の文字数：" + len + " / " + lim.max + "（目安）", len > lim.max ? 8 : 0);
+    else item(cm, "ok", "文字数：" + len, 0);
+    var tags = (cap.match(/[#＃][^\s#＃]+/g) || []).length;
+    if (lim.tags) item(cm, tags > lim.tags ? "warn" : "ok", "ハッシュタグ：" + tags + "個（" + lim.name + "の目安は" + lim.tags + "個以内）", tags > lim.tags ? 3 : 0);
+    creatives.forEach(function (c, i) {
+      var label = (c.kind === "video" ? "動画" : "画像") + (i + 1);
+      if (c.error) { item(cm, "warn", label + "：" + c.error + "（読み取れなかったため、この項目は採点に含めていません）", 0); return; }
+      if (!c.w) return;
+      var ratio = c.w / c.h, lost = 0, note = "";
+      if (lim.ratios.length && !lim.ratios.some(function (r) { return Math.abs(ratio - r) / r < 0.03; })) { lost += 3; note += "（" + lim.name + "の推奨比率から外れています）"; }
+      if (Math.min(c.w, c.h) < 720) { lost += 2; note += "（短辺が720px未満で、画質が荒く見える可能性があります）"; }
+      item(cm, lost ? "warn" : "ok", label + "：" + c.w + "×" + c.h + "px" + (c.duration ? "、" + fmtTime(c.duration) : "") + note, lost);
+    });
+    if (!creatives.length) item(cm, "warn", "クリエイティブ（画像・動画）が未追加です。", 3);
+    // 6. credit (10)
     if ($("needCredit").checked) {
-      var cr = list($("credits").value).some(function (w) { return all.indexOf(w) >= 0; });
-      add(box, cr ? "ok" : "ng", cr ? "クレジット表記が見つかりました" : "クレジット表記が見つかりません");
+      var cc2 = cat("クレジット表記", 10);
+      var found = list($("credits").value).some(function (w) { return all.indexOf(w) >= 0; });
+      item(cc2, found ? "ok" : "ng", found ? "クレジット表記が見つかりました" : "クレジット表記が見つかりません", found ? 0 : 10);
     }
+
+    // totals (normalised to 100 over the applicable categories)
+    var maxSum = 0, earnedSum = 0;
+    cats.forEach(function (c) { c.earned = Math.max(0, c.max - c.lost); maxSum += c.max; earnedSum += c.earned; });
+    var total = maxSum ? Math.round(earnedSum / maxSum * 100) : 0;
+    if (!all.trim()) total = 0;
+    var g = grade(total);
+
+    var box = $("localResult"); box.textContent = "";
+    warnings.forEach(function (w) { var d = document.createElement("div"); d.className = "check warn"; d.textContent = w; box.appendChild(d); });
+
+    // gauge
+    var wrap = document.createElement("div"); wrap.className = "gauge-wrap";
+    var R = 52, CIRC = 2 * Math.PI * R, NS = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(NS, "svg"); svg.setAttribute("viewBox", "0 0 140 140"); svg.setAttribute("class", "gauge");
+    svg.setAttribute("role", "img"); svg.setAttribute("aria-label", "ルールチェックスコア " + total + "点");
+    function circ(stroke, dash) {
+      var c = document.createElementNS(NS, "circle");
+      c.setAttribute("cx", 70); c.setAttribute("cy", 70); c.setAttribute("r", R); c.setAttribute("fill", "none");
+      c.setAttribute("stroke-width", 14); c.setAttribute("stroke", stroke); c.setAttribute("transform", "rotate(-90 70 70)");
+      if (dash !== undefined) { c.setAttribute("stroke-dasharray", dash + " " + CIRC); c.setAttribute("stroke-linecap", "round"); }
+      svg.appendChild(c);
+    }
+    circ("var(--line)"); circ(colorOf(total), CIRC * total / 100);
+    function txt(y, size, weight, fill, s) {
+      var t = document.createElementNS(NS, "text"); t.setAttribute("x", 70); t.setAttribute("y", y); t.setAttribute("text-anchor", "middle");
+      t.setAttribute("font-size", size); t.setAttribute("font-weight", weight); t.setAttribute("fill", fill); t.textContent = s; svg.appendChild(t);
+    }
+    txt(78, 38, 700, "var(--text)", String(total)); txt(98, 12, 400, "var(--sub)", "/ 100点");
+    wrap.appendChild(svg);
+    var side = document.createElement("div");
+    var gl = document.createElement("div"); gl.className = "gradeline"; gl.style.color = colorOf(total); gl.textContent = "判定：" + g[0]; side.appendChild(gl);
+    var gd = document.createElement("div"); gd.className = "note";
+    gd.textContent = "90点以上=優秀 ／ 75点以上=良好 ／ 60点以上=要改善 ／ 60点未満=要修正。ルールで機械的に判定できる項目だけの点数です。"; side.appendChild(gd);
+    wrap.appendChild(side); box.appendChild(wrap);
+
+    // category bars + details
+    cats.forEach(function (c) {
+      var pct = Math.round(c.earned / c.max * 100), d = document.createElement("div"); d.className = "cat";
+      var h = document.createElement("div"); h.className = "head";
+      var a = document.createElement("span"); a.textContent = c.name;
+      var b = document.createElement("span"); b.textContent = c.earned + " / " + c.max + "点"; h.appendChild(a); h.appendChild(b);
+      var bar = document.createElement("div"); bar.className = "bar";
+      var i = document.createElement("i"); i.style.width = pct + "%"; i.style.background = colorOf(pct); bar.appendChild(i);
+      d.appendChild(h); d.appendChild(bar);
+      c.items.forEach(function (it) {
+        var r = document.createElement("div"); r.className = "check " + it.level;
+        var m = document.createElement("span"); m.className = "mark"; m.textContent = it.level === "ok" ? "OK" : it.level === "warn" ? "注意" : "NG";
+        var t = document.createElement("span"); t.textContent = it.text; r.appendChild(m); r.appendChild(t); d.appendChild(r);
+      });
+      box.appendChild(d);
+    });
     $("localCard").hidden = false;
     $("localCard").scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -732,86 +780,6 @@ ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
         "\n（会社のネットワークでGoogleのAPIがブロックされている場合は、コピペ方式を使ってください）";
     }).then(function () { clearTimeout(timer); updateMode(); });
   }
-
-  /* ------------------------------------------------------------------ samples */
-  var FONT = '"Hiragino Sans","Yu Gothic","Meiryo","Noto Sans CJK JP","WenQuanYi Zen Hei",sans-serif';
-  function sampleCanvas(draw) {
-    var c = document.createElement("canvas"); c.width = 1080; c.height = 1350;
-    var g = c.getContext("2d"); g.textBaseline = "middle"; draw(g, c.width, c.height);
-    return c;
-  }
-  function ell(g, x, y, rx, ry, fill, rot) { g.beginPath(); g.ellipse(x, y, rx, ry, rot || 0, 0, Math.PI * 2); g.fillStyle = fill; g.fill(); }
-  function drawHigh(g, w, h) {
-    var bg = g.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, "#fbf1de"); bg.addColorStop(1, "#e9d2b0");
-    g.fillStyle = bg; g.fillRect(0, 0, w, h);
-    ell(g, 860, 230, 190, 190, "rgba(255,236,190,.75)");
-    g.fillStyle = "#4a2f1d"; g.textAlign = "left";
-    g.font = "bold 76px " + FONT; g.fillText("朝の5分を、", 90, 200);
-    g.font = "bold 76px " + FONT; g.fillText("挽きたての香りで。", 90, 300);
-    g.font = "32px " + FONT; g.fillStyle = "#7a5a40"; g.fillText("いつもの朝が、少しやさしくなる一杯を。", 90, 385);
-    ell(g, 540, 940, 330, 70, "rgba(90,60,40,.18)");
-    g.fillStyle = "#fffaf2"; g.beginPath(); g.moveTo(300, 640); g.lineTo(780, 640); g.quadraticCurveTo(770, 930, 540, 950); g.quadraticCurveTo(310, 930, 300, 640); g.fill();
-    ell(g, 540, 640, 240, 52, "#5b3a24"); ell(g, 540, 640, 205, 36, "#7b5236");
-    g.beginPath(); g.ellipse(790, 750, 80, 100, 0, -Math.PI / 2, Math.PI / 2); g.lineWidth = 34; g.strokeStyle = "#fffaf2"; g.stroke();
-    g.lineWidth = 10; g.strokeStyle = "rgba(120,90,60,.35)"; g.lineCap = "round";
-    [440, 540, 640].forEach(function (x) { g.beginPath(); g.moveTo(x, 590); g.bezierCurveTo(x - 40, 530, x + 40, 490, x, 420); g.stroke(); });
-    [[210, 1040, 28], [300, 1085, 24], [820, 1050, 26], [900, 1100, 22], [150, 1110, 22]].forEach(function (b, i) { ell(g, b[0], b[1], b[2], b[2] * 1.4, "#5b3a24", i * .6); g.fillStyle = "#3b2314"; g.fillRect(b[0] - 2, b[1] - b[2], 4, b[2] * 1.5); });
-    g.fillStyle = "#4a2f1d"; g.fillRect(90, 1170, 900, 110);
-    g.fillStyle = "#fbf1de"; g.font = "bold 44px " + FONT; g.fillText("初回お試しセット　500円", 130, 1225);
-    g.font = "28px " + FONT; g.textAlign = "right"; g.fillText("MORI COFFEE", 950, 1225);
-  }
-  function drawLow(g, w, h) {
-    g.fillStyle = "#ffe600"; g.fillRect(0, 0, w, h);
-    g.fillStyle = "#e60012"; for (var i = 0; i < 9; i++) { g.fillRect(0, i * 170 + 40, w, 70); }
-    g.textAlign = "center"; g.lineJoin = "round";
-    function t(s, y, size, fill, stroke) {
-      g.font = "900 " + size + "px " + FONT;
-      if (stroke) { g.lineWidth = 16; g.strokeStyle = stroke; g.strokeText(s, w / 2, y); }
-      g.fillStyle = fill; g.fillText(s, w / 2, y);
-    }
-    t("全品半額!!!", 270, 170, "#ffffff", "#000000");
-    t("在庫一掃セール", 520, 120, "#e60012", "#ffffff");
-    t("コーヒ豆　激安", 740, 130, "#000000", "#ffffff");
-    t("今すぐ買わないと損", 940, 74, "#ffffff", "#000000");
-    t("※先着順　なくなり次第終了", 1090, 44, "#000000");
-    g.fillStyle = "#000"; g.fillRect(40, 1180, 1000, 110);
-    g.fillStyle = "#ffe600"; g.font = "bold 52px " + FONT; g.fillText("今すぐ！　急げ！！　最安値！！！", w / 2, 1235);
-  }
-  var SAMPLES = {
-    high: {
-      note: "高得点を狙う例：訴求（朝の香り・挽きたて・初回お試し）が、画像・文章・CTA・トーンのすべてでそろっています。",
-      appeal: "忙しい朝でも、挽きたての香りで1日がやさしく始まる",
-      target: "20〜30代の働く人（朝が慌ただしい）",
-      cta: "プロフィールのリンクから初回お試しセットを注文",
-      tone: "落ち着いて、やさしく、押しつけない",
-      kw: "朝, 挽きたて, 香り, 初回お試し",
-      must: "初回お試しセット, 500円, プロフィールのリンク",
-      caption: "朝の5分を、少しだけ丁寧に。\n\n挽きたての香りが立ちのぼる瞬間は、慌ただしい朝のささやかなごほうびです。\nMORI COFFEEは、焙煎したてのコーヒー豆を毎月お届けします。\n\nはじめての方には、初回お試しセット（500円）をご用意しました。\n気になった方は、プロフィールのリンクからのぞいてみてください。\n\n#朝コーヒー #挽きたて #コーヒーのある暮らし #MORICOFFEE",
-      draw: drawHigh, file: "sample-high.png"
-    },
-    low: {
-      note: "低得点になる例：同じ訴求軸なのに、画像と文章が「激安セール」一色で、トーンも誤字も訴求から大きくずれています。",
-      appeal: "忙しい朝でも、挽きたての香りで1日がやさしく始まる",
-      target: "20〜30代の働く人（朝が慌ただしい）",
-      cta: "プロフィールのリンクから初回お試しセットを注文",
-      tone: "落ち着いて、やさしく、押しつけない",
-      kw: "朝, 挽きたて, 香り, 初回お試し",
-      must: "初回お試しセット, 500円, プロフィールのリンク",
-      caption: "【緊急】全品半額！！！！絶対に最安値！！\n今買わないと100%後悔します！！ ！\n引きたてのコーヒ豆が、なんと奇跡の価格に！！\n在庫が無くなったら終わりなので、急いで下さい！！！\n\n#セール #激安 #半額 #最安値 #お得 #買って #今すぐ #限定 #コーヒー",
-      draw: drawLow, file: "sample-low.png"
-    }
-  };
-  function loadSample(key) {
-    var s = SAMPLES[key];
-    ["appeal", "target", "cta", "tone", "kw", "must", "caption"].forEach(function (id) { $(id).value = s[id]; });
-    $("platform").value = "instagram"; $("imgtext").value = ""; $("imgdesc").value = "";
-    creatives.forEach(function (c) { URL.revokeObjectURL(c.url); }); creatives = []; renderFiles();
-    sampleCanvas(s.draw).toBlob(function (b) { addFiles([new File([b], s.file, { type: "image/png" })]); }, "image/png");
-    $("sampleNote").textContent = s.note + " 下のステップ2までスクロールして内容を確認し、「ルールチェックを実行」や「Gemini用の指示文を作る」を押してください。";
-    $("capNote").scrollIntoView({ behavior: "smooth", block: "center" });
-  }
-  $("sampleHigh").addEventListener("click", function () { loadSample("high"); });
-  $("sampleLow").addEventListener("click", function () { loadSample("low"); });
 
   $("runLocal").addEventListener("click", runLocal);
   $("makePrompt").addEventListener("click", buildPrompt);
