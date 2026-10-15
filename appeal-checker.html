@@ -25,6 +25,7 @@ h1 { font-size: 1.5rem; margin: 0 0 4px; }
 .lead { color: var(--sub); margin: 0 0 20px; font-size: .92rem; }
 .badge { display: inline-block; background: var(--ok-soft); color: var(--ok); border-radius: 999px;
   padding: 2px 10px; font-size: .78rem; font-weight: 600; margin-left: 6px; vertical-align: middle; }
+.badge.ext { background: var(--warn-soft); color: var(--warn); }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
 .card h2 { font-size: 1.05rem; margin: 0 0 4px; }
 .card .hint { color: var(--sub); font-size: .85rem; margin: 0 0 14px; }
@@ -32,8 +33,9 @@ h1 { font-size: 1.5rem; margin: 0 0 4px; }
   background: var(--accent); color: #fff; border-radius: 50%; font-size: .8rem; margin-right: 8px; }
 label { display: block; font-weight: 600; font-size: .88rem; margin: 14px 0 4px; }
 label small { color: var(--sub); font-weight: 400; }
-input[type=text], textarea, select { width: 100%; padding: 9px 11px; border: 1px solid var(--line);
+input[type=text], input[type=password], textarea, select { width: 100%; padding: 9px 11px; border: 1px solid var(--line);
   border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; font-size: .93rem; }
+input[type=file] { font-size: .85rem; max-width: 100%; }
 textarea { min-height: 96px; resize: vertical; }
 input:focus, textarea:focus, select:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -41,15 +43,26 @@ input:focus, textarea:focus, select:focus, button:focus-visible { outline: 2px s
 button { font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid var(--accent);
   padding: 9px 16px; background: var(--accent); color: #fff; font-weight: 600; font-size: .92rem; }
 button.ghost { background: transparent; color: var(--accent); }
+button.small { padding: 4px 10px; font-size: .8rem; }
 button:disabled { opacity: .5; cursor: not-allowed; }
 .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
-.preview { margin-top: 10px; }
-.preview img { max-width: 100%; max-height: 260px; border-radius: 8px; border: 1px solid var(--line); }
 details { margin-top: 14px; }
 summary { cursor: pointer; font-weight: 600; font-size: .9rem; color: var(--accent); }
+.drop { border: 2px dashed var(--line); border-radius: 10px; padding: 18px; text-align: center; color: var(--sub);
+  font-size: .88rem; cursor: pointer; }
+.drop.over { border-color: var(--accent); background: var(--accent-soft); }
+.files { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; margin-top: 12px; }
+.file { border: 1px solid var(--line); border-radius: 10px; padding: 8px; background: var(--bg); font-size: .8rem; }
+.file .media { width: 100%; height: 140px; object-fit: contain; background: #0002; border-radius: 6px; display: block; }
+.file .name { font-weight: 600; word-break: break-all; margin-top: 6px; }
+.file .meta { color: var(--sub); }
+.file .err { color: var(--ng); margin-top: 4px; }
+.file .btns { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.frames { display: flex; gap: 3px; margin-top: 6px; overflow-x: auto; }
+.frames img { height: 38px; border-radius: 3px; }
 .check { display: flex; gap: 10px; align-items: flex-start; padding: 8px 12px; border-radius: 8px; margin-top: 8px; font-size: .9rem; }
 .check.ok { background: var(--ok-soft); } .check.warn { background: var(--warn-soft); } .check.ng { background: var(--ng-soft); }
-.check .mark { font-weight: 700; min-width: 1.2em; }
+.check .mark { font-weight: 700; min-width: 2.4em; }
 .check.ok .mark { color: var(--ok); } .check.warn .mark { color: var(--warn); } .check.ng .mark { color: var(--ng); }
 pre { white-space: pre-wrap; word-break: break-word; background: var(--bg); border: 1px solid var(--line);
   border-radius: 8px; padding: 12px; font-size: .82rem; max-height: 340px; overflow: auto; margin: 10px 0 0; }
@@ -61,15 +74,20 @@ pre { white-space: pre-wrap; word-break: break-word; background: var(--bg); bord
 .score { margin-top: 14px; }
 .score .head { display: flex; justify-content: space-between; gap: 10px; font-weight: 600; font-size: .92rem; }
 .score .reason { color: var(--sub); font-size: .86rem; margin: 2px 0 0; }
+.sec { font-size: .95rem; margin: 22px 0 0; }
 ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
+.det { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-top: 8px; font-size: .88rem; }
+.det b { display: block; }
 .note { font-size: .8rem; color: var(--sub); margin-top: 8px; }
-.err { color: var(--ng); font-size: .88rem; margin-top: 8px; }
+.err { color: var(--ng); font-size: .88rem; margin-top: 8px; white-space: pre-wrap; }
+.warnbox { background: var(--warn-soft); border: 1px solid var(--warn); border-radius: 8px; padding: 10px 12px; font-size: .85rem; margin: 10px 0; }
+.status { font-size: .88rem; color: var(--sub); margin-top: 10px; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>訴求チェッカー<span class="badge">通信なし・ブラウザ内で完結</span></h1>
-  <p class="lead">訴求軸を先に決めて、クリエイティブとキャプションがその訴求に合っているかを確認します。ジャンルを問わず使えます。このページは外部へデータを送信しません。</p>
+  <h1>訴求チェッカー<span class="badge" id="modeBadge">通信なし・ブラウザ内で完結</span></h1>
+  <p class="lead">訴求軸を先に決めて、画像・動画・キャプションがその訴求に合っているかを確認します。ジャンルを問わず使えます。初期状態では外部へデータを送信しません。</p>
 
   <!-- STEP 1 -->
   <section class="card">
@@ -118,32 +136,74 @@ ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
   <!-- STEP 2 -->
   <section class="card">
     <h2><span class="step">2</span>投稿内容を入力</h2>
-    <p class="hint">画像の中身はこのツールでは解析しません。画像内の文言と、画像の内容の説明を書いてください。画像そのものはGeminiに添付します。</p>
-    <label>キャプション・投稿文</label>
-    <textarea id="caption" placeholder="投稿文を貼り付け"></textarea>
-    <div class="row">
-      <div>
-        <label>クリエイティブ内の文言<small>画像・動画に入っているテキスト</small></label>
-        <textarea id="imgtext" placeholder="例：「今だけ20%OFF」「10/31まで」"></textarea>
-      </div>
-      <div>
-        <label>クリエイティブの内容の説明<small>何が写っているか、構図、色味など</small></label>
-        <textarea id="imgdesc" placeholder="例：木のテーブルに商品を置いた明るい写真。右下にロゴ"></textarea>
-      </div>
+    <p class="hint">キャプションは貼り付けでもファイルでも入力できます。クリエイティブは画像・動画を複数入れられます。</p>
+
+    <label>キャプション・投稿文<small>貼り付け、またはファイル読み込み</small></label>
+    <textarea id="caption" placeholder="投稿文を貼り付け、または下のボタンからファイルを読み込み"></textarea>
+    <div style="margin-top:8px">
+      <input type="file" id="capfile" accept=".txt,.md,.csv,.html,.htm,.docx,text/plain">
+      <div class="note" id="capNote">対応：.txt / .md / .csv / .html / .docx。Googleドキュメントは「ファイル → ダウンロード → Microsoft Word（.docx）またはプレーンテキスト（.txt）」で保存したものを読み込めます。</div>
     </div>
-    <label>確認用の画像<small>任意。この端末内で表示するだけで、保存や送信はしません</small></label>
-    <input type="file" id="imgfile" accept="image/*">
-    <div class="preview" id="preview"></div>
+
+    <label>クリエイティブ（画像・動画）<small>複数可。この端末内で表示するだけで、初期状態では送信しません</small></label>
+    <div class="drop" id="drop">ここにファイルをドラッグ＆ドロップ、またはクリックして選択<br><small>画像：JPG / PNG / GIF / WebP　動画：MP4 / MOV / WebM</small></div>
+    <input type="file" id="crfile" accept="image/*,video/*" multiple hidden>
+    <div class="files" id="files"></div>
+
+    <details>
+      <summary>補足（任意）：AIが読み取る内容を自分でも書く場合</summary>
+      <div class="row">
+        <div>
+          <label>クリエイティブ内の文言<small>画像・動画に入っているテキスト</small></label>
+          <textarea id="imgtext" placeholder="空欄でもAIが画像から読み取ります"></textarea>
+        </div>
+        <div>
+          <label>クリエイティブの内容の説明</label>
+          <textarea id="imgdesc" placeholder="空欄でもAIが画像から読み取ります"></textarea>
+        </div>
+      </div>
+    </details>
+
     <div class="actions">
       <button id="runLocal">ルールチェックを実行</button>
       <button class="ghost" id="makePrompt">Gemini用の指示文を作る</button>
     </div>
   </section>
 
+  <!-- API MODE -->
+  <section class="card">
+    <h2>Gemini直接連携（任意・外部通信あり）</h2>
+    <p class="hint">オンにすると、コピペなしでこのツールが画像・動画のコマ・テキストを評価に送り、結果を自動で表示します。</p>
+    <label style="display:flex;gap:8px;align-items:center;font-weight:400;margin-top:0">
+      <input type="checkbox" id="apiOn"> Gemini APIによる自動評価を使う
+    </label>
+    <div id="apiBox" hidden>
+      <div class="warnbox">
+        <b>オンにすると、入力したキャプション、画像、動画のコマ画像がGoogleのGemini APIへ送信されます。</b><br>
+        社内でAPIの利用・未公開クリエイティブの送信が許可されているか、必ず確認してから使ってください。APIキーはこのページを閉じると消え、保存されません。
+      </div>
+      <div class="row">
+        <div>
+          <label>APIキー</label>
+          <input type="password" id="apiKey" autocomplete="off" placeholder="Google AI Studioなどで発行したキー">
+        </div>
+        <div>
+          <label>モデル名</label>
+          <input type="text" id="apiModel" value="gemini-2.5-flash">
+        </div>
+      </div>
+      <label style="display:flex;gap:8px;align-items:center;font-weight:400">
+        <input type="checkbox" id="apiConsent"> 上記の送信内容を理解し、社内ルールで許可されていることを確認しました
+      </label>
+      <div class="actions"><button id="runApi" disabled>Geminiに直接評価させる</button></div>
+      <div class="status" id="apiStatus"></div>
+    </div>
+  </section>
+
   <!-- LOCAL CHECK -->
   <section class="card" id="localCard" hidden>
     <h2>ルールチェック結果</h2>
-    <p class="hint">機械的に判定できる項目だけの結果です。内容が訴求に合っているかは、下の手順でGeminiに評価してもらいます。</p>
+    <p class="hint">機械的に判定できる項目だけの結果です。内容が訴求に合っているかは、Geminiによる評価で確認します。</p>
     <div id="localResult"></div>
     <details>
       <summary>チェック辞書を編集</summary>
@@ -160,11 +220,11 @@ ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
 
   <!-- PROMPT -->
   <section class="card" id="promptCard" hidden>
-    <h2><span class="step">3</span>Geminiで評価する</h2>
-    <p class="hint">① 下の指示文をコピー → ② Geminiに貼り付け、画像も一緒に添付 → ③ 返ってきた結果を、次の欄に貼り付けます。</p>
+    <h2><span class="step">3</span>Geminiで評価する（コピペ方式）</h2>
+    <p class="hint">① 下の指示文をコピー → ② Geminiに貼り付け、画像・動画ファイルも一緒に添付 → ③ 返ってきた結果を、次の欄に貼り付けます。</p>
     <pre id="promptOut"></pre>
     <div class="actions"><button id="copyPrompt">指示文をコピー</button></div>
-    <p class="note">公開前のクリエイティブをGeminiに入れてよいかは、社内の規定に従ってください。</p>
+    <p class="note">動画が大きくて添付できない場合は、各動画カードの「コマ画像を保存」で作った画像を代わりに添付できます。公開前のクリエイティブをGeminiに入れてよいかは、社内の規定に従ってください。</p>
 
     <label style="margin-top:24px">Geminiの返答をここに貼り付け</label>
     <textarea id="reply" placeholder="Geminiが出力したJSONを貼り付け"></textarea>
@@ -196,22 +256,23 @@ ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
     credits: "Photo by, photo by, ©, (c), 画像提供, 写真提供, 提供：, 撮影：, Credit"
   };
   var LIMITS = {
-    x: { name: "X", max: 140, tags: 3 },
-    instagram: { name: "Instagram", max: 2200, tags: 30 },
-    tiktok: { name: "TikTok", max: 2200, tags: 10 },
-    facebook: { name: "Facebook", max: 63206, tags: 10 },
-    youtube: { name: "YouTube", max: 5000, tags: 15 },
-    other: { name: "その他", max: 0, tags: 0 }
+    x: { name: "X", max: 140, tags: 3, ratios: [16 / 9, 1, 9 / 16] },
+    instagram: { name: "Instagram", max: 2200, tags: 30, ratios: [1, 4 / 5, 9 / 16, 1.91] },
+    tiktok: { name: "TikTok", max: 2200, tags: 10, ratios: [9 / 16] },
+    facebook: { name: "Facebook", max: 63206, tags: 10, ratios: [1, 4 / 5, 16 / 9, 9 / 16] },
+    youtube: { name: "YouTube", max: 5000, tags: 15, ratios: [16 / 9, 9 / 16] },
+    other: { name: "その他", max: 0, tags: 0, ratios: [] }
   };
   var RUBRIC = [
     { key: "appeal", label: "訴求との一致", weight: 2, desc: "主訴求が、キャプションとクリエイティブの両方から読み取れるか" },
-    { key: "consistency", label: "画像とキャプションの整合", weight: 1, desc: "画像の内容と文章が矛盾せず、同じメッセージを補強しているか" },
+    { key: "consistency", label: "画像・動画とキャプションの整合", weight: 1, desc: "クリエイティブの内容と文章が矛盾せず、同じメッセージを補強しているか" },
     { key: "target", label: "ターゲットへの適合", weight: 1, desc: "指定したターゲットに刺さる言葉・見せ方か" },
     { key: "tone", label: "トーン＆マナー", weight: 1, desc: "指定のトーンと一致し、一貫しているか" },
     { key: "cta", label: "行動喚起の明確さ", weight: 1, desc: "次に何をしてほしいかが自然に伝わるか" }
   ];
+  var MAX_FRAMES = 8;
 
-  function store(k, v) { try { if (v === undefined) return localStorage.getItem("ac_" + k); localStorage.setItem("ac_" + k, v); } catch (e) { return null; } }
+  function store(k, val) { try { if (val === undefined) return localStorage.getItem("ac_" + k); localStorage.setItem("ac_" + k, val); } catch (e) { return null; } }
   ["ngwords", "variants", "credits"].forEach(function (k) {
     $(k).value = store(k) || DEFAULTS[k];
     $(k).addEventListener("change", function () { store(k, $(k).value); });
@@ -221,24 +282,183 @@ ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
 
   function list(s) { return s.split(/[,、，\n]/).map(function (x) { return x.trim(); }).filter(Boolean); }
   function v(id) { return $(id).value.trim(); }
+  function fmtTime(s) { s = Math.round(s); return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2); }
 
-  // image preview (local only)
-  var objUrl = null;
-  $("imgfile").addEventListener("change", function (e) {
-    var f = e.target.files[0], box = $("preview");
-    box.textContent = "";
-    if (objUrl) { URL.revokeObjectURL(objUrl); objUrl = null; }
-    if (!f) return;
-    objUrl = URL.createObjectURL(f);
-    var img = document.createElement("img");
-    img.src = objUrl; img.alt = "確認用の画像";
-    box.appendChild(img);
-    var info = document.createElement("div");
-    info.className = "note";
-    img.onload = function () { info.textContent = img.naturalWidth + " × " + img.naturalHeight + " px ／ " + (f.size / 1024).toFixed(0) + " KB"; };
-    box.appendChild(info);
+  /* ------------------------------------------------------------------ caption file import */
+  function readDocx(file) {
+    return file.arrayBuffer().then(function (buf) {
+      var dv = new DataView(buf), u8 = new Uint8Array(buf), eocd = -1, i;
+      for (i = buf.byteLength - 22; i >= Math.max(0, buf.byteLength - 65557); i--) {
+        if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+      }
+      if (eocd < 0) throw new Error("docx形式として読み取れません");
+      var count = dv.getUint16(eocd + 10, true), off = dv.getUint32(eocd + 16, true), n, found = null;
+      for (n = 0; n < count; n++) {
+        if (dv.getUint32(off, true) !== 0x02014b50) break;
+        var method = dv.getUint16(off + 10, true), csize = dv.getUint32(off + 20, true);
+        var nlen = dv.getUint16(off + 28, true), elen = dv.getUint16(off + 30, true), clen = dv.getUint16(off + 32, true);
+        var lho = dv.getUint32(off + 42, true);
+        var name = new TextDecoder().decode(u8.subarray(off + 46, off + 46 + nlen));
+        if (name === "word/document.xml") {
+          var start = lho + 30 + dv.getUint16(lho + 26, true) + dv.getUint16(lho + 28, true);
+          found = { method: method, data: u8.subarray(start, start + csize) };
+          break;
+        }
+        off += 46 + nlen + elen + clen;
+      }
+      if (!found) throw new Error("docx内に本文が見つかりません");
+      if (found.method === 0) return found.data;
+      if (found.method !== 8) throw new Error("未対応の圧縮形式です");
+      if (typeof DecompressionStream === "undefined") throw new Error("このブラウザはdocx読み込みに未対応です。.txtで保存して読み込んでください");
+      var stream = new Blob([found.data]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+      return new Response(stream).arrayBuffer().then(function (ab) { return new Uint8Array(ab); });
+    }).then(function (bytes) {
+      var xml = new DOMParser().parseFromString(new TextDecoder().decode(bytes), "application/xml");
+      var W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main", out = [];
+      function walk(node, acc) {
+        for (var c = node.firstChild; c; c = c.nextSibling) {
+          if (c.nodeType !== 1) continue;
+          if (c.namespaceURI === W && c.localName === "t") acc.s += c.textContent;
+          else if (c.namespaceURI === W && c.localName === "tab") acc.s += "\t";
+          else if (c.namespaceURI === W && (c.localName === "br" || c.localName === "cr")) acc.s += "\n";
+          else walk(c, acc);
+        }
+      }
+      var ps = xml.getElementsByTagNameNS(W, "p");
+      for (var k = 0; k < ps.length; k++) { var acc = { s: "" }; walk(ps[k], acc); out.push(acc.s); }
+      return out.join("\n");
+    });
+  }
+  function readHtml(text) {
+    var doc = new DOMParser().parseFromString(text, "text/html");
+    ["script", "style", "head"].forEach(function (t) { Array.prototype.forEach.call(doc.querySelectorAll(t), function (e) { e.remove(); }); });
+    Array.prototype.forEach.call(doc.querySelectorAll("br"), function (e) { e.replaceWith("\n"); });
+    Array.prototype.forEach.call(doc.querySelectorAll("p,div,li,h1,h2,h3,h4,h5,h6,tr"), function (e) { e.append("\n"); });
+    return (doc.body ? doc.body.textContent : "").replace(/\n{3,}/g, "\n\n").trim();
+  }
+  $("capfile").addEventListener("change", function (e) {
+    var f = e.target.files[0]; if (!f) return;
+    var note = $("capNote"), ext = (f.name.split(".").pop() || "").toLowerCase();
+    var p;
+    if (ext === "docx") p = readDocx(f);
+    else if (ext === "html" || ext === "htm") p = f.text().then(readHtml);
+    else p = f.text();
+    p.then(function (text) {
+      text = text.replace(/\r\n?/g, "\n").trim();
+      $("caption").value = text;
+      note.textContent = "読み込み完了：" + f.name + "（" + Array.from(text).length + "文字）。内容は上の欄で編集できます。";
+    }).catch(function (err) { note.textContent = "読み込みに失敗しました：" + err.message; });
+    e.target.value = "";
   });
 
+  /* ------------------------------------------------------------------ creatives (image / video) */
+  var creatives = [], seq = 0;
+
+  function loadImage(url) {
+    return new Promise(function (res, rej) { var im = new Image(); im.onload = function () { res(im); }; im.onerror = function () { rej(new Error("画像を読み込めません")); }; im.src = url; });
+  }
+  function loadVideo(url) {
+    return new Promise(function (res, rej) {
+      var el = document.createElement("video");
+      el.muted = true; el.playsInline = true; el.preload = "auto";
+      el.onloadedmetadata = function () { res(el); };
+      el.onerror = function () { rej(new Error("この動画形式はブラウザで読み取れません（MP4/H.264への変換、または動画ファイルをGeminiに直接添付してください）")); };
+      el.src = url;
+    });
+  }
+  function seek(el, t) {
+    return new Promise(function (res) {
+      var done = false, h = function () { if (done) return; done = true; el.removeEventListener("seeked", h); res(); };
+      el.addEventListener("seeked", h); el.currentTime = t; setTimeout(h, 4000);
+    });
+  }
+  function toJpeg(src, sw, sh, maxSide, q) {
+    var sc = Math.min(1, maxSide / Math.max(sw, sh)), w = Math.max(1, Math.round(sw * sc)), h = Math.max(1, Math.round(sh * sc));
+    var c = document.createElement("canvas"); c.width = w; c.height = h;
+    var g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.drawImage(src, 0, 0, w, h);
+    return c.toDataURL("image/jpeg", q);
+  }
+
+  function addFiles(files) {
+    Array.prototype.forEach.call(files, function (f) {
+      var kind = f.type.indexOf("video/") === 0 ? "video" : f.type.indexOf("image/") === 0 ? "image" : null;
+      if (!kind) return;
+      var c = { id: ++seq, file: f, kind: kind, url: URL.createObjectURL(f), w: 0, h: 0, duration: 0, frames: [], data: null, error: "", busy: true };
+      creatives.push(c); renderFiles();
+      var job = kind === "image"
+        ? loadImage(c.url).then(function (im) { c.w = im.naturalWidth; c.h = im.naturalHeight; c.data = toJpeg(im, c.w, c.h, 1600, 0.85); })
+        : loadVideo(c.url).then(function (el) {
+            c.w = el.videoWidth; c.h = el.videoHeight; c.duration = isFinite(el.duration) ? el.duration : 0;
+            var n = c.duration ? Math.min(MAX_FRAMES, Math.max(3, Math.ceil(c.duration / 4))) : 1, seq2 = Promise.resolve(), k;
+            function grab(t) {
+              return function () { return seek(el, t).then(function () { c.frames.push({ t: t, data: toJpeg(el, c.w, c.h, 1024, 0.8) }); }); };
+            }
+            for (k = 0; k < n; k++) seq2 = seq2.then(grab(c.duration ? (k + 0.5) / n * c.duration : 0));
+            return seq2;
+          });
+      job.catch(function (err) { c.error = err.message; }).then(function () { c.busy = false; renderFiles(); });
+    });
+  }
+  function removeCreative(id) {
+    creatives = creatives.filter(function (c) { if (c.id === id) URL.revokeObjectURL(c.url); return c.id !== id; });
+    renderFiles();
+  }
+  function saveContactSheet(c) {
+    if (!c.frames.length) return;
+    var cols = Math.min(4, c.frames.length), rows = Math.ceil(c.frames.length / cols), cw = 480, ch = Math.round(cw * c.h / c.w);
+    var cv = document.createElement("canvas"); cv.width = cols * cw; cv.height = rows * ch;
+    var g = cv.getContext("2d"); g.fillStyle = "#000"; g.fillRect(0, 0, cv.width, cv.height);
+    Promise.all(c.frames.map(function (f) { return loadImage(f.data); })).then(function (ims) {
+      ims.forEach(function (im, i) {
+        var x = (i % cols) * cw, y = Math.floor(i / cols) * ch;
+        g.drawImage(im, x, y, cw, ch);
+        g.fillStyle = "rgba(0,0,0,.6)"; g.fillRect(x, y, 60, 22);
+        g.fillStyle = "#fff"; g.font = "14px sans-serif"; g.fillText(fmtTime(c.frames[i].t), x + 8, y + 16);
+      });
+      cv.toBlob(function (b) {
+        var a = document.createElement("a"); a.href = URL.createObjectURL(b);
+        a.download = c.file.name.replace(/\.[^.]+$/, "") + "_frames.png"; document.body.appendChild(a); a.click();
+        setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+      }, "image/png");
+    });
+  }
+  function renderFiles() {
+    var box = $("files"); box.textContent = "";
+    creatives.forEach(function (c, idx) {
+      var d = document.createElement("div"); d.className = "file";
+      var m = document.createElement(c.kind === "video" ? "video" : "img");
+      m.className = "media"; m.src = c.url;
+      if (c.kind === "video") { m.controls = true; m.muted = true; m.preload = "metadata"; } else m.alt = c.file.name;
+      d.appendChild(m);
+      var nm = document.createElement("div"); nm.className = "name"; nm.textContent = (c.kind === "video" ? "動画" : "画像") + " " + (idx + 1) + "：" + c.file.name; d.appendChild(nm);
+      var mt = document.createElement("div"); mt.className = "meta";
+      mt.textContent = c.busy ? "読み取り中…" : (c.w ? c.w + "×" + c.h + "px" : "") + (c.duration ? " ／ " + fmtTime(c.duration) : "") + " ／ " + (c.file.size / 1048576).toFixed(1) + "MB";
+      d.appendChild(mt);
+      if (c.error) { var er = document.createElement("div"); er.className = "err"; er.textContent = c.error; d.appendChild(er); }
+      if (c.frames.length) {
+        var fr = document.createElement("div"); fr.className = "frames";
+        c.frames.forEach(function (f) { var im = document.createElement("img"); im.src = f.data; im.alt = fmtTime(f.t); im.title = fmtTime(f.t); fr.appendChild(im); });
+        d.appendChild(fr);
+      }
+      var bt = document.createElement("div"); bt.className = "btns";
+      if (c.frames.length) {
+        var b1 = document.createElement("button"); b1.className = "ghost small"; b1.textContent = "コマ画像を保存";
+        b1.addEventListener("click", function () { saveContactSheet(c); }); bt.appendChild(b1);
+      }
+      var b2 = document.createElement("button"); b2.className = "ghost small"; b2.textContent = "削除";
+      b2.addEventListener("click", function () { removeCreative(c.id); }); bt.appendChild(b2);
+      d.appendChild(bt);
+      box.appendChild(d);
+    });
+  }
+  var drop = $("drop");
+  drop.addEventListener("click", function () { $("crfile").click(); });
+  drop.addEventListener("dragover", function (e) { e.preventDefault(); drop.classList.add("over"); });
+  drop.addEventListener("dragleave", function () { drop.classList.remove("over"); });
+  drop.addEventListener("drop", function (e) { e.preventDefault(); drop.classList.remove("over"); addFiles(e.dataTransfer.files); });
+  $("crfile").addEventListener("change", function (e) { addFiles(e.target.files); e.target.value = ""; });
+
+  /* ------------------------------------------------------------------ rule checks */
   function add(box, level, text) {
     var d = document.createElement("div"); d.className = "check " + level;
     var m = document.createElement("span"); m.className = "mark";
@@ -251,18 +471,31 @@ ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
     var box = $("localResult"); box.textContent = "";
     var cap = v("caption"), img = v("imgtext"), all = cap + "\n" + img;
     if (!v("appeal")) add(box, "warn", "主訴求が未入力です。ステップ1に入力してください。");
-    if (!all.trim()) { add(box, "warn", "キャプションまたはクリエイティブ内の文言を入力してください。"); $("localCard").hidden = false; return; }
+    if (!all.trim()) { add(box, "warn", "キャプションを入力してください。"); $("localCard").hidden = false; return; }
 
-    // length / hashtags
     var lim = LIMITS[$("platform").value];
     var len = Array.from(cap).length;
-    if (lim.max) {
-      add(box, len > lim.max ? "ng" : "ok", lim.name + "の文字数：" + len + " / " + lim.max + "（目安）");
-    } else add(box, "ok", "文字数：" + len);
+    if (lim.max) add(box, len > lim.max ? "ng" : "ok", lim.name + "の文字数：" + len + " / " + lim.max + "（目安）");
+    else add(box, "ok", "文字数：" + len);
     var tags = (cap.match(/[#＃][^\s#＃]+/g) || []).length;
     if (lim.tags) add(box, tags > lim.tags ? "warn" : "ok", "ハッシュタグ：" + tags + "個（" + lim.name + "の目安は" + lim.tags + "個以内）");
 
-    // appeal keywords
+    // creative files
+    creatives.forEach(function (c, i) {
+      var label = (c.kind === "video" ? "動画" : "画像") + (i + 1);
+      if (c.error) { add(box, "ng", label + "：" + c.error); return; }
+      if (!c.w) return;
+      var ratio = c.w / c.h, info = label + "：" + c.w + "×" + c.h + "px" + (c.duration ? "、" + fmtTime(c.duration) : "");
+      var level = "ok", note = "";
+      if (lim.ratios.length) {
+        var okRatio = lim.ratios.some(function (r) { return Math.abs(ratio - r) / r < 0.03; });
+        if (!okRatio) { level = "warn"; note = "（" + lim.name + "の推奨比率から外れています）"; }
+      }
+      if (Math.min(c.w, c.h) < 720) { level = level === "ok" ? "warn" : level; note += "（短辺が720px未満で、画質が荒く見える可能性があります）"; }
+      add(box, level, info + note);
+    });
+    if (!creatives.length) add(box, "warn", "クリエイティブ（画像・動画）が未追加です。");
+
     var kws = list(v("kw"));
     if (kws.length) {
       var hit = kws.filter(function (k) { return all.indexOf(k) >= 0; });
@@ -270,22 +503,18 @@ ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
       add(box, hit.length === 0 ? "ng" : miss.length ? "warn" : "ok",
         "訴求キーワード：" + hit.length + " / " + kws.length + " 個が含まれています" + (miss.length ? "（未使用：" + miss.join("、") + "）" : ""));
     }
-    // must elements
     var musts = list(v("must"));
     if (musts.length) {
       var mm = musts.filter(function (k) { return all.indexOf(k) < 0; });
       add(box, mm.length ? "ng" : "ok", mm.length ? "必須要素が不足：" + mm.join("、") : "必須要素はすべて含まれています");
     }
-    // CTA
     if (v("cta")) {
       var ctaLike = /リンク|プロフィール|予約|購入|申込|申し込|詳細|チェック|コメント|フォロー|保存|シェア|お問い合わせ|ご確認|こちら|DM|click|link/i.test(all);
       add(box, ctaLike ? "ok" : "warn", ctaLike ? "行動を促す表現が見つかりました" : "行動を促す表現が見当たりません（期待する行動：" + v("cta") + "）");
     }
-    // NG words
     var ng = list($("ngwords").value).filter(function (w) { return all.toLowerCase().indexOf(w.toLowerCase()) >= 0; });
     add(box, ng.length ? "ng" : "ok", ng.length ? "注意が必要な表現：" + ng.join("、") + "（根拠の有無・社内ルールを確認）" : "NGワードは見つかりませんでした");
 
-    // variants
     var vh = [];
     $("variants").value.split("\n").forEach(function (line) {
       var p = line.split(/→|->/); if (p.length < 2) return;
@@ -294,7 +523,6 @@ ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
     });
     add(box, vh.length ? "warn" : "ok", vh.length ? "表記ゆれ候補：" + vh.join("、") : "表記ゆれ辞書に該当なし");
 
-    // character hygiene
     var issues = [];
     if (/[｡-ﾟ]/.test(all)) issues.push("半角カナ");
     if (/[Ａ-Ｚａ-ｚ０-９]/.test(all)) issues.push("全角英数字");
@@ -303,7 +531,6 @@ ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
     if (/[。、]{2,}/.test(all)) issues.push("句読点の連続");
     add(box, issues.length ? "warn" : "ok", issues.length ? "文字・記号の確認：" + issues.join("、") : "文字・記号に目立った問題なし");
 
-    // credit
     if ($("needCredit").checked) {
       var cr = list($("credits").value).some(function (w) { return all.indexOf(w) >= 0; });
       add(box, cr ? "ok" : "ng", cr ? "クレジット表記が見つかりました" : "クレジット表記が見つかりません");
@@ -312,16 +539,17 @@ ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
     $("localCard").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  /* ------------------------------------------------------------------ prompt */
   function currentRubric() {
     var r = RUBRIC.slice();
     list(v("extra")).forEach(function (t, i) { r.push({ key: "extra" + (i + 1), label: t, weight: 1, desc: "追加観点：" + t }); });
     return r;
   }
+  function creativeLabel(c, idx) { return (c.kind === "video" ? "動画" : "画像") + (idx + 1) + "（" + c.file.name + "）"; }
 
-  function buildPrompt() {
-    var r = currentRubric();
-    var L = [];
-    L.push("あなたはSNSマーケティングの審査担当です。次の「訴求軸」を基準に、添付した画像（クリエイティブ）とキャプションが、訴求にどれだけ合っているかを厳密に評価してください。");
+  function buildPromptText(apiMode) {
+    var r = currentRubric(), L = [];
+    L.push("あなたはSNSマーケティングの審査担当です。次の「訴求軸」を基準に、クリエイティブ（画像・動画）とキャプションが、訴求にどれだけ合っているかを厳密に評価してください。");
     L.push("");
     L.push("## 訴求軸");
     L.push("- 主訴求：" + (v("appeal") || "（未入力）"));
@@ -334,54 +562,61 @@ ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
     L.push("## 投稿内容");
     L.push("### キャプション");
     L.push(v("caption") || "（未入力）");
-    L.push("### クリエイティブ内の文言");
-    L.push(v("imgtext") || "（なし／添付画像を確認してください）");
-    L.push("### クリエイティブの内容（投稿者の説明）");
-    L.push(v("imgdesc") || "（添付画像を確認してください）");
+    L.push("### クリエイティブ");
+    if (creatives.length) {
+      creatives.forEach(function (c, i) {
+        L.push("- " + creativeLabel(c, i) + "：" + (c.w ? c.w + "×" + c.h + "px" : "") + (c.duration ? "、長さ" + fmtTime(c.duration) : ""));
+      });
+      L.push(apiMode
+        ? "（画像は添付のとおり。動画は、等間隔に抜き出したコマ画像を時刻順に添付しています。音声は含まれません。）"
+        : "（添付した画像・動画ファイルを、実際に見て確認してください。動画は映像と音声・字幕の両方を確認してください。）");
+    } else L.push("（添付なし）");
+    if (v("imgtext")) { L.push("### クリエイティブ内の文言（投稿者による補足）"); L.push(v("imgtext")); }
+    if (v("imgdesc")) { L.push("### クリエイティブの内容（投稿者による補足）"); L.push(v("imgdesc")); }
     L.push("");
     L.push("## 評価項目（各1〜5点の整数）");
     r.forEach(function (x) { L.push("- " + x.key + "：" + x.label + "｜" + x.desc); });
     L.push("");
     L.push("## 採点基準");
     L.push("5=完全に合致 / 4=概ね合致 / 3=部分的に合致 / 2=弱い / 1=合致しない・矛盾");
-    L.push("甘く採点せず、根拠が確認できない場合は3点以下にしてください。reasonには、画像またはキャプションの具体的な要素を引用して根拠を書いてください。");
+    L.push("甘く採点せず、根拠が確認できない場合は3点以下にしてください。reasonには、画像・動画・キャプションの具体的な要素を引用して根拠を書いてください。");
     L.push("");
     L.push("## 出力形式");
     L.push("説明文は付けず、次のJSONだけを出力してください。");
     L.push("{");
-    L.push('  "scores": [');
-    L.push('    {"key": "appeal", "score": 1〜5の整数, "reason": "根拠"}');
-    L.push("  ],");
+    L.push('  "scores": [{"key": "appeal", "score": 1〜5の整数, "reason": "根拠"}],');
+    L.push('  "creatives": [{"name": "ファイル名", "detected": "写っているもの・場面・雰囲気", "visible_text": "クリエイティブ内に見える文字（そのまま）", "typos": ["クリエイティブ内の誤字脱字候補"]}],');
+    L.push('  "caption_typos": ["キャプションの誤字脱字・表記ゆれ候補"],');
     L.push('  "strengths": ["訴求に合っている点"],');
-    L.push('  "issues": ["訴求とずれている点・誤字脱字・矛盾"],');
+    L.push('  "issues": ["訴求とずれている点・矛盾"],');
     L.push('  "improvements": ["具体的な改善案（3つ）"]');
     L.push("}");
-    L.push("scoresには上記の評価項目すべて（key: " + r.map(function (x) { return x.key; }).join(", ") + "）を含めてください。");
-    $("promptOut").textContent = L.join("\n");
+    L.push("scoresには上記の評価項目すべて（key: " + r.map(function (x) { return x.key; }).join(", ") + "）を含めてください。creativesには添付したクリエイティブすべてを含めてください。");
+    return L.join("\n");
+  }
+  function buildPrompt() {
+    $("promptOut").textContent = buildPromptText(false);
     $("promptCard").hidden = false;
     $("promptCard").scrollIntoView({ behavior: "smooth", block: "start" });
   }
-
   function copy(text, btn) {
     var done = function () { var o = btn.textContent; btn.textContent = "コピーしました"; setTimeout(function () { btn.textContent = o; }, 1500); };
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(done, fallback);
-    } else fallback();
     function fallback() {
       var ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta);
       ta.select(); try { document.execCommand("copy"); done(); } catch (e) {} document.body.removeChild(ta);
     }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
   }
 
-  function parseReply() {
-    var err = $("parseErr"); err.textContent = "";
-    var raw = $("reply").value;
+  /* ------------------------------------------------------------------ result */
+  function showResult(raw, errBox) {
+    errBox.textContent = "";
     var s = raw.indexOf("{"), e = raw.lastIndexOf("}");
-    if (s < 0 || e <= s) { err.textContent = "JSONが見つかりません。Geminiの出力をそのまま貼り付けてください。"; return; }
+    if (s < 0 || e <= s) { errBox.textContent = "JSONが見つかりません。Geminiの出力をそのまま貼り付けてください。"; return false; }
     var data;
     try { data = JSON.parse(raw.slice(s, e + 1)); }
-    catch (x) { err.textContent = "JSONとして読み取れませんでした。「JSONだけをもう一度出力して」とGeminiに依頼してください。"; return; }
-    if (!data.scores || !data.scores.length) { err.textContent = "scores が含まれていません。"; return; }
+    catch (x) { errBox.textContent = "JSONとして読み取れませんでした。「JSONだけをもう一度出力して」とGeminiに依頼してください。"; return false; }
+    if (!data.scores || !data.scores.length) { errBox.textContent = "scores が含まれていません。"; return false; }
 
     var rubric = currentRubric(), map = {};
     rubric.forEach(function (x) { map[x.key] = x; });
@@ -409,21 +644,90 @@ ul.list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
     $("pctNote").textContent = pct >= 80 ? "訴求とよく合っています" : pct >= 60 ? "概ね合っていますが、改善の余地があります" : "訴求とのずれが大きいです。改善案を確認してください";
 
     var ls = $("lists"); ls.textContent = "";
-    [["良い点", data.strengths], ["課題・ずれている点", data.issues], ["改善案", data.improvements]].forEach(function (p) {
-      if (!p[1] || !p[1].length) return;
-      var h = document.createElement("h3"); h.style.cssText = "font-size:.95rem;margin:20px 0 0"; h.textContent = p[0];
+    function heading(t) { var h = document.createElement("h3"); h.className = "sec"; h.textContent = t; ls.appendChild(h); }
+    function bullets(arr) {
       var ul = document.createElement("ul"); ul.className = "list";
-      p[1].forEach(function (t) { var li = document.createElement("li"); li.textContent = String(t); ul.appendChild(li); });
-      ls.appendChild(h); ls.appendChild(ul);
+      arr.forEach(function (t) { var li = document.createElement("li"); li.textContent = String(t); ul.appendChild(li); });
+      ls.appendChild(ul);
+    }
+    if (data.creatives && data.creatives.length) {
+      heading("クリエイティブの読み取り結果");
+      data.creatives.forEach(function (c) {
+        var d = document.createElement("div"); d.className = "det";
+        function line(k, val) { if (!val) return; var b = document.createElement("b"); b.textContent = k; var p = document.createElement("div"); p.textContent = String(val); d.appendChild(b); d.appendChild(p); }
+        line("ファイル", c.name); line("検出した内容", c.detected); line("見える文字", c.visible_text);
+        if (c.typos && c.typos.length) line("誤字脱字の候補", c.typos.join(" ／ "));
+        ls.appendChild(d);
+      });
+    }
+    [["キャプションの誤字脱字・表記ゆれ候補", data.caption_typos], ["良い点", data.strengths], ["課題・ずれている点", data.issues], ["改善案", data.improvements]].forEach(function (p) {
+      if (!p[1] || !p[1].length) return; heading(p[0]); bullets(p[1]);
     });
     $("resultCard").hidden = false;
     $("resultCard").scrollIntoView({ behavior: "smooth", block: "start" });
+    return true;
+  }
+
+  /* ------------------------------------------------------------------ Gemini API mode (opt-in) */
+  function updateMode() {
+    var on = $("apiOn").checked, badge = $("modeBadge");
+    $("apiBox").hidden = !on;
+    badge.textContent = on ? "Gemini API連携ON（外部送信あり）" : "通信なし・ブラウザ内で完結";
+    badge.className = "badge" + (on ? " ext" : "");
+    $("runApi").disabled = !(on && $("apiConsent").checked && $("apiKey").value.trim());
+  }
+  ["apiOn", "apiConsent"].forEach(function (id) { $(id).addEventListener("change", updateMode); });
+  $("apiKey").addEventListener("input", updateMode);
+
+  function runApi() {
+    var st = $("apiStatus"), btn = $("runApi");
+    if (!v("caption") && !creatives.length) { st.textContent = "キャプションまたはクリエイティブを入力してください。"; return; }
+    if (creatives.some(function (c) { return c.busy; })) { st.textContent = "クリエイティブの読み取り中です。少し待ってからもう一度押してください。"; return; }
+    var parts = [{ text: buildPromptText(true) }], bytes = 0;
+    creatives.forEach(function (c, i) {
+      if (c.kind === "image" && c.data) {
+        parts.push({ text: "【" + creativeLabel(c, i) + "】" });
+        parts.push({ inline_data: { mime_type: "image/jpeg", data: c.data.split(",")[1] } });
+        bytes += c.data.length;
+      } else if (c.kind === "video") {
+        c.frames.forEach(function (f) {
+          parts.push({ text: "【" + creativeLabel(c, i) + " " + fmtTime(f.t) + "付近のコマ】" });
+          parts.push({ inline_data: { mime_type: "image/jpeg", data: f.data.split(",")[1] } });
+          bytes += f.data.length;
+        });
+      }
+    });
+    if (bytes > 18 * 1048576) { st.textContent = "添付が大きすぎます（約" + (bytes / 1048576).toFixed(0) + "MB）。ファイル数を減らしてください。"; return; }
+    var model = $("apiModel").value.trim() || "gemini-2.5-flash";
+    var ctl = new AbortController(), timer = setTimeout(function () { ctl.abort(); }, 120000);
+    btn.disabled = true; st.textContent = "Geminiに送信して評価中…（最大2分）"; $("parseErr").textContent = "";
+    fetch("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent", {
+      method: "POST", signal: ctl.signal,
+      headers: { "Content-Type": "application/json", "x-goog-api-key": $("apiKey").value.trim() },
+      body: JSON.stringify({ contents: [{ role: "user", parts: parts }], generationConfig: { responseMimeType: "application/json", temperature: 0.2 } })
+    }).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (j) {
+        if (!res.ok) throw new Error("HTTP " + res.status + (j.error && j.error.message ? "：" + j.error.message : ""));
+        var cand = j.candidates && j.candidates[0];
+        var text = cand && cand.content && cand.content.parts ? cand.content.parts.map(function (p) { return p.text || ""; }).join("") : "";
+        if (!text) throw new Error("評価結果が空でした" + (j.promptFeedback && j.promptFeedback.blockReason ? "（ブロック理由：" + j.promptFeedback.blockReason + "）" : ""));
+        return text;
+      });
+    }).then(function (text) {
+      $("reply").value = text;
+      var ok = showResult(text, st);
+      if (ok) st.textContent = "評価が完了しました。";
+    }).catch(function (err) {
+      st.textContent = "評価に失敗しました：" + (err.name === "AbortError" ? "時間切れです" : err.message) +
+        "\n（会社のネットワークでGoogleのAPIがブロックされている場合は、コピペ方式を使ってください）";
+    }).then(function () { clearTimeout(timer); updateMode(); });
   }
 
   $("runLocal").addEventListener("click", runLocal);
   $("makePrompt").addEventListener("click", buildPrompt);
   $("copyPrompt").addEventListener("click", function () { copy($("promptOut").textContent, this); });
-  $("parse").addEventListener("click", parseReply);
+  $("parse").addEventListener("click", function () { showResult($("reply").value, $("parseErr")); });
+  $("runApi").addEventListener("click", runApi);
 })();
 </script>
 </body>
